@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GYMcheck — AI Form Coach For Lifters</title>
+<meta name="description" content="Upload a clip. In 20 seconds, get plain-English feedback on your form, what to fix, and a score from 1 to 100. Built for lifters who train alone." />
+
+<meta property="og:title" content="GYMcheck — AI Form Coach For Lifters" />
+<meta property="og:description" content="Upload a clip. Get plain-English form feedback in 20 seconds." />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+:root{
+  --bg:#f3efe6;
+  --paper:#ebe6d7;
+  --ink:#0d0d0d;
+  --ink-soft:#2a2a2a;
+  --muted:#7a766b;
+  --line:#0d0d0d;
+  --accent:#ff2d00;
+  --acid:#d8ff00;
+  --good:#1a8f4a;
+  --warn:#e8a400;
+  --bad:#ff2d00;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--accent);color:var(--bg)}
+
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.08;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode:multiply;
+}
+
+/* ======================= LEGAL ELEMENTS ======================= */
+.legal-notice{background:#fff;border:1.5px solid var(--ink);border-left:4px solid var(--accent);padding:14px 18px;margin-bottom:18px;font-size:12px;line-height:1.5;color:var(--ink-soft)}
+.legal-notice b{color:var(--ink)}
+.legal-notice a{color:var(--accent);font-weight:700;text-decoration:underline}
+
+.agreement{display:flex;gap:10px;align-items:flex-start;padding:14px;background:var(--paper);border:1.5px solid var(--ink);font-size:12px;line-height:1.5;margin:14px 0;cursor:pointer}
+.agreement input{margin-top:3px;flex-shrink:0;width:18px;height:18px;cursor:pointer;accent-color:var(--accent)}
+.agreement label{cursor:pointer;color:var(--ink-soft)}
+.agreement label b{color:var(--ink)}
+.agreement label a{color:var(--accent);font-weight:700;text-decoration:underline}
+
+.result-disclaimer{margin-top:24px;padding:16px;background:#161616;border-left:3px solid var(--warn);font-size:12px;line-height:1.5;color:#bbb;font-style:italic;position:relative;z-index:1}
+.result-disclaimer b{color:var(--warn);font-style:normal}
+.result-disclaimer a{color:var(--warn);text-decoration:underline}
+
+/* First-visit disclaimer modal */
+.first-modal-content{padding:8px 0}
+.first-modal-content h3{font-family:'Anton',sans-serif;font-size:18px;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;margin-top:18px}
+.first-modal-content h3:first-child{margin-top:0}
+.first-modal-content p{font-size:14px;line-height:1.55;margin-bottom:10px}
+
+/* ======================= LOGO SYSTEM ======================= */
+/* The signature: GYMcheck. with italic "check" — used everywhere */
+.gc-logo{font-family:'Anton',sans-serif;letter-spacing:-0.01em;text-transform:uppercase;line-height:0.85;display:inline-block;color:var(--ink)}
+.gc-logo .check{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:lowercase;color:var(--accent);letter-spacing:-0.02em}
+.gc-logo .dot{color:var(--ink)}
+.gc-logo.inverse{color:var(--bg)}
+.gc-logo.inverse .dot{color:var(--bg)}
+
+/* ======================= NAV ======================= */
+.nav{position:relative;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--ink);background:var(--bg)}
+.nav .gc-logo{font-size:30px}
+.nav-right{display:flex;gap:8px;align-items:center}
+.nav-right a{padding:9px 16px;font-size:13px;font-weight:600;border:1.5px solid var(--ink);transition:all .15s;letter-spacing:0.02em}
+.nav-right a:hover{background:var(--ink);color:var(--bg)}
+.nav-right a.cta{background:var(--ink);color:var(--bg)}
+.nav-right a.cta:hover{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+
+/* ======================= HERO ======================= */
+.hero{position:relative;z-index:2;padding:64px 28px 48px;border-bottom:1px solid var(--ink)}
+.hero-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:center;max-width:1280px;margin:0 auto}
+.hero-headline{font-family:'Anton',sans-serif;font-size:clamp(56px,9vw,128px);line-height:0.9;letter-spacing:-0.015em;text-transform:uppercase;color:var(--ink)}
+.hero-headline .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent);letter-spacing:-0.02em}
+
+.hero-promise{margin-top:28px;font-size:18px;line-height:1.55;max-width:560px;color:var(--ink-soft);padding-left:18px;border-left:3px solid var(--accent)}
+.hero-promise b{color:var(--ink);font-weight:600}
+
+.hero-cta-row{margin-top:36px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.04em;padding:18px 28px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);transition:transform .15s, box-shadow .15s, background .15s;cursor:pointer}
+.btn:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 var(--accent);background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--bg);box-shadow:6px 6px 0 var(--ink)}
+.btn.acid{background:var(--acid);color:var(--ink);border-color:var(--ink)}
+.btn.acid:hover{background:var(--ink);color:var(--acid);box-shadow:6px 6px 0 var(--ink)}
+.btn.big{padding:22px 32px;font-size:15px}
+.btn .arrow{font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;font-weight:400}
+
+.hero-trust{margin-top:18px;display:flex;flex-wrap:wrap;gap:18px;font-size:12px;font-weight:500;color:var(--muted)}
+.hero-trust span{display:flex;align-items:center;gap:6px}
+.hero-trust span::before{content:"✓";color:var(--good);font-weight:700;font-size:14px}
+
+/* sample report card */
+.hero-right{display:flex;justify-content:center;align-items:center}
+.sample{width:100%;max-width:380px;background:var(--ink);color:var(--bg);padding:28px;position:relative;border:2px solid var(--ink);box-shadow:14px 14px 0 var(--accent), 14px 14px 0 2px var(--ink);transform:rotate(-2deg)}
+.sample::before{content:"";position:absolute;top:-12px;left:-12px;width:36px;height:36px;background:var(--acid);border:2px solid var(--ink);border-radius:50%;z-index:1}
+.sample .sample-tape{position:absolute;top:-18px;left:50%;transform:translateX(-50%) rotate(-2deg);background:var(--accent);color:var(--bg);padding:5px 18px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+.sample .sample-head{display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#999;border-bottom:1px solid #333;padding-bottom:10px;margin-bottom:18px;font-weight:600}
+.sample .sample-lift{font-family:'Anton',sans-serif;font-size:48px;line-height:0.9;letter-spacing:0.01em;text-transform:uppercase}
+.sample .sample-lift .em{font-family:'Instrument Serif',serif;font-style:italic;color:var(--accent);font-weight:400}
+.sample .sample-score-block{display:flex;align-items:flex-end;justify-content:space-between;margin:18px 0;padding:18px 0 8px;border-top:1px dashed #333;border-bottom:1px dashed #333}
+.sample .sample-score{font-family:'Anton',sans-serif;font-size:104px;line-height:0.8;color:var(--accent)}
+.sample .sample-score-meta{text-align:right;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#888;line-height:1.5;font-weight:600}
+.sample .sample-score-meta .grade{font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;color:var(--acid);text-transform:none;letter-spacing:0;margin-top:4px;display:block}
+.sample .sample-flag{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:7px 0;border-bottom:1px dotted #333}
+.sample .sample-flag:last-child{border:none}
+.sample .sample-flag .nm{font-weight:500}
+.sample .sample-flag .pill{font-size:9px;font-weight:700;letter-spacing:0.12em;padding:3px 8px;text-transform:uppercase}
+.pill.bad{background:var(--bad);color:var(--bg)}
+.pill.warn{background:var(--warn);color:var(--ink)}
+.pill.good{background:var(--good);color:var(--bg)}
+
+/* ======================= STAT BAR ======================= */
+.stat-bar{background:var(--ink);color:var(--bg);padding:0;border-bottom:1px solid var(--ink);display:grid;grid-template-columns:repeat(4,1fr)}
+.stat-bar .stat{padding:22px 16px;border-right:1px solid #2a2a2a;text-align:center}
+.stat-bar .stat:last-child{border-right:none}
+.stat-bar .num{font-family:'Anton',sans-serif;font-size:36px;line-height:0.9;color:var(--accent);letter-spacing:-0.02em}
+.stat-bar .num .ital{font-family:'Instrument Serif',serif;font-style:italic;color:var(--acid);font-weight:400}
+.stat-bar .lbl{font-size:11px;color:#999;margin-top:6px;font-weight:500}
+
+/* ======================= SECTION ======================= */
+.section{position:relative;z-index:2;padding:80px 28px;border-bottom:1px solid var(--ink)}
+.section.dark{background:var(--ink);color:var(--bg);border-bottom:3px solid var(--accent)}
+.section.paper{background:var(--paper)}
+.section-inner{max-width:1180px;margin:0 auto}
+.section-head{margin-bottom:48px;border-bottom:1px solid var(--ink);padding-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px}
+.section.dark .section-head{border-color:#2a2a2a}
+.section-eyebrow{font-size:11px;font-weight:700;letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.section-title{font-family:'Anton',sans-serif;font-size:clamp(40px,5.6vw,80px);line-height:0.9;text-transform:uppercase;letter-spacing:-0.01em}
+.section-title .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent);letter-spacing:-0.02em}
+.section-meta{font-size:12px;color:var(--muted);text-align:right;line-height:1.6;font-weight:500}
+.section-meta b{color:var(--ink);display:block;font-size:13px;letter-spacing:0.05em;font-weight:700}
+.section.dark .section-meta b{color:var(--bg)}
+
+/* ======================= STEPS ======================= */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink)}
+.step{background:var(--bg);padding:36px 28px;position:relative}
+.step .step-num{font-family:'Anton',sans-serif;font-size:120px;line-height:0.85;color:var(--accent);letter-spacing:-0.04em;margin-bottom:8px}
+.step h3{font-family:'Anton',sans-serif;font-size:28px;line-height:1;letter-spacing:0.01em;text-transform:uppercase;margin-bottom:10px}
+.step h3 .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent)}
+.step p{font-size:15px;line-height:1.55;color:var(--ink-soft)}
+.step .duration{margin-top:14px;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0.05em}
+.step .duration b{color:var(--accent);letter-spacing:0.1em}
+
+/* ======================= APP / UPLOAD ======================= */
+.app-section{background:var(--paper);padding:80px 28px;border-bottom:2px solid var(--ink);position:relative;z-index:2}
+.app-inner{max-width:1180px;margin:0 auto}
+
+.uploader{display:grid;grid-template-columns:1.25fr 1fr;gap:28px}
+
+.dropzone{position:relative;background:var(--bg);border:2px dashed var(--ink);min-height:420px;padding:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:all .2s;overflow:hidden}
+.dropzone::before{content:"";position:absolute;inset:6px;border:1px solid rgba(13,13,13,0.15);pointer-events:none}
+.dropzone .corner{position:absolute;width:18px;height:18px;border:2px solid var(--accent)}
+.dropzone .corner.tl{top:-2px;left:-2px;border-right:none;border-bottom:none}
+.dropzone .corner.tr{top:-2px;right:-2px;border-left:none;border-bottom:none}
+.dropzone .corner.bl{bottom:-2px;left:-2px;border-right:none;border-top:none}
+.dropzone .corner.br{bottom:-2px;right:-2px;border-left:none;border-top:none}
+.dropzone:hover{background:var(--ink);color:var(--bg);border-color:var(--accent);border-style:solid}
+.dropzone:hover .dz-mark{color:var(--accent)}
+.dropzone.has-file{border-style:solid;background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dz-mark{font-family:'Anton',sans-serif;font-size:120px;line-height:0.8;color:var(--ink);transition:color .2s}
+.dropzone.has-file .dz-mark,.dropzone:hover .dz-mark{color:var(--accent)}
+.dz-title{font-family:'Anton',sans-serif;font-size:32px;letter-spacing:0.02em;text-transform:uppercase;margin-top:12px;line-height:1}
+.dz-title .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent)}
+.dz-sub{font-size:11px;font-weight:500;margin-top:10px;opacity:0.7;letter-spacing:0.05em}
+.dz-sub-2{font-family:'Instrument Serif',serif;font-style:italic;font-size:14px;margin-top:8px;color:var(--accent)}
+.dropzone img,.dropzone video{max-height:300px;width:auto;border:2px solid var(--accent);box-shadow:6px 6px 0 var(--accent)}
+.dz-uploaded{margin-top:14px;font-size:11px;letter-spacing:0.1em;color:var(--acid);display:flex;align-items:center;gap:8px;font-weight:600;text-transform:uppercase}
+.dz-uploaded::before{content:"●";color:var(--acid);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#fileInput{display:none}
+
+.controls{display:flex;flex-direction:column;gap:18px;background:var(--bg);padding:24px;border:2px solid var(--ink)}
+.ctrl-label{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase}
+.ctrl-label .req{color:var(--accent);font-style:italic;font-family:'Instrument Serif',serif;font-size:13px;letter-spacing:0;text-transform:none}
+.lift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.lift-btn{padding:13px 4px;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);font-family:'Anton',sans-serif;font-size:15px;letter-spacing:0.03em;text-transform:uppercase;cursor:pointer;transition:all .12s;line-height:1}
+.lift-btn:hover{background:var(--ink);color:var(--bg)}
+.lift-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.notes{width:100%;padding:12px;border:1.5px solid var(--ink);background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;resize:vertical;min-height:74px}
+.notes::placeholder{color:var(--muted);font-style:italic}
+.analyze{width:100%;padding:22px;background:var(--ink);color:var(--bg);font-family:'Anton',sans-serif;font-size:24px;letter-spacing:0.04em;text-transform:uppercase;border:2px solid var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:14px;transition:all .15s;line-height:1}
+.analyze:hover:not(:disabled){background:var(--accent);border-color:var(--accent)}
+.analyze:disabled{opacity:0.35;cursor:not-allowed}
+.analyze .arrow{font-family:'Instrument Serif',serif;font-style:italic;font-size:28px;font-weight:400}
+.usage{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:500;color:var(--muted);border-top:1px dashed var(--ink);padding-top:14px;flex-wrap:wrap;gap:8px}
+.usage b{color:var(--accent);font-size:14px;font-weight:700}
+.usage .pro-badge{background:var(--acid);color:var(--ink);padding:3px 8px;font-weight:700;letter-spacing:0.08em;margin-right:6px;font-size:11px;text-transform:uppercase}
+
+.loading{display:none;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;background:var(--ink);color:var(--bg);margin-top:48px;border:2px solid var(--accent)}
+.loading.show{display:flex}
+.loading .spin-wrap{position:relative;width:80px;height:80px}
+.loading .spin{position:absolute;inset:0;border:3px solid #2a2a2a;border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite}
+.loading .spin.sec{inset:14px;border-top-color:var(--acid);animation-duration:1.4s;animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading .status{margin-top:28px;font-family:'Anton',sans-serif;font-size:24px;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent)}
+.loading .sub{margin-top:8px;font-size:12px;color:#666;font-weight:500}
+
+/* ======================= RESULT (cleaner, more legit) ======================= */
+.result{display:none;margin-top:56px}
+.result.show{display:block;animation:slideUp .5s cubic-bezier(.2,.9,.3,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+
+.result-card{background:var(--ink);color:var(--bg);padding:48px;border:3px solid var(--ink);position:relative;overflow:hidden}
+.result-card::before{content:"";position:absolute;top:-50%;right:-30%;width:600px;height:600px;background:radial-gradient(circle, rgba(255,45,0,0.12), transparent 60%);pointer-events:none}
+
+.result-brand{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid #2a2a2a;position:relative;z-index:1}
+.result-brand .gc-logo{font-size:22px}
+.result-brand .gc-logo,.result-brand .gc-logo .dot{color:var(--bg)}
+.result-brand .stamp{font-family:'Instrument Serif',serif;font-style:italic;font-size:13px;color:var(--acid);border:1.5px solid var(--acid);padding:5px 14px;letter-spacing:0.02em}
+
+.result-head{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;margin-bottom:36px;position:relative;z-index:1}
+.result-head .lift-label{font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.result-lift{font-family:'Anton',sans-serif;font-size:64px;line-height:0.92;text-transform:uppercase;letter-spacing:-0.01em}
+.result-lift .em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent)}
+
+.score-display{text-align:right;position:relative}
+.score-num{font-family:'Anton',sans-serif;font-size:140px;line-height:0.8;color:var(--accent);letter-spacing:-0.03em;display:block}
+.score-label{font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.score-grade{font-family:'Instrument Serif',serif;font-style:italic;font-size:24px;color:var(--acid);margin-top:6px;display:block}
+
+.result-section{margin-bottom:32px;position:relative;z-index:1}
+.result-section .sec-label{font-family:'Anton',sans-serif;font-size:13px;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.result-section .sec-label::before{content:"";width:24px;height:2px;background:var(--accent)}
+
+.verdict{font-family:'Instrument Serif',serif;font-size:24px;line-height:1.4;font-style:italic;color:var(--bg);max-width:880px}
+.verdict::first-letter{font-size:56px;float:left;line-height:0.85;padding-right:10px;color:var(--accent);font-weight:400}
+
+.flag-list{display:grid;gap:10px}
+.flag-item{display:grid;grid-template-columns:14px 1fr auto;gap:18px;align-items:start;padding:16px 18px;background:#161616;border-left:4px solid var(--warn)}
+.flag-item.bad{border-color:var(--bad)}
+.flag-item.good{border-color:var(--good)}
+.flag-item .indicator{width:14px;height:14px;background:var(--warn);border-radius:50%;margin-top:5px}
+.flag-item.bad .indicator{background:var(--bad)}
+.flag-item.good .indicator{background:var(--good)}
+.flag-item .body b{font-family:'Anton',sans-serif;font-size:18px;letter-spacing:0.03em;text-transform:uppercase;color:var(--bg);display:block;margin-bottom:4px;font-weight:400}
+.flag-item .body{font-size:14px;line-height:1.55;color:#ccc}
+.flag-item .badge{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 8px;background:var(--warn);color:var(--ink);align-self:start;white-space:nowrap}
+.flag-item.bad .badge{background:var(--bad);color:var(--bg)}
+.flag-item.good .badge{background:var(--good);color:var(--bg)}
+
+.fix-list{display:grid;gap:14px;counter-reset:fix}
+.fix-item{display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:start;padding:22px;background:#161616;position:relative}
+.fix-item::before{counter-increment:fix;content:counter(fix,decimal-leading-zero);font-family:'Anton',sans-serif;font-size:60px;line-height:0.8;color:var(--accent);letter-spacing:-0.02em}
+.fix-item .body{font-size:15px;line-height:1.55;padding-top:6px;color:#e8e8e8}
+.fix-item .body b{color:var(--acid);font-weight:700}
+
+.result-actions{display:flex;gap:10px;margin-top:32px;flex-wrap:wrap;position:relative;z-index:1}
+.result-actions .btn{font-size:12px;padding:14px 22px}
+
+/* ======================= COMPARISON ======================= */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--ink)}
+.compare-col{padding:36px 32px;position:relative}
+.compare-col.before{background:var(--bg)}
+.compare-col.after{background:var(--ink);color:var(--bg)}
+.compare-col .label{font-family:'Anton',sans-serif;font-size:14px;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px}
+.compare-col.before .label{color:var(--muted)}
+.compare-col.after .label{color:var(--accent)}
+.compare-col h3{font-family:'Anton',sans-serif;font-size:36px;line-height:0.95;text-transform:uppercase;letter-spacing:-0.01em;margin-bottom:24px}
+.compare-col h3 .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none}
+.compare-col.before h3 .ital{color:var(--muted)}
+.compare-col.after h3 .ital{color:var(--accent)}
+.compare-list{display:grid;gap:12px}
+.compare-list li{list-style:none;font-size:15px;line-height:1.5;display:grid;grid-template-columns:22px 1fr;gap:10px}
+.compare-col.before li::before{content:"×";color:var(--accent);font-weight:700;font-size:20px;line-height:1}
+.compare-col.after li::before{content:"✓";color:var(--acid);font-weight:700;font-size:18px;line-height:1.1}
+
+/* ======================= FEATURES ======================= */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;border:1px solid var(--ink);background:var(--ink)}
+.feat{background:var(--bg);padding:32px 28px;position:relative;transition:background .2s}
+.feat:hover{background:var(--paper)}
+.feat .feat-icon{font-family:'Anton',sans-serif;font-size:64px;line-height:0.85;color:var(--accent);margin-bottom:14px;letter-spacing:-0.02em}
+.feat .feat-icon .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400}
+.feat h4{font-family:'Anton',sans-serif;font-size:24px;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:8px;line-height:1}
+.feat h4 .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent)}
+.feat p{color:var(--ink-soft);font-size:14px;line-height:1.55}
+.feat p b{color:var(--ink);font-weight:700}
+
+/* ======================= PRICING ======================= */
+.tiers{display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:1px;background:#2a2a2a;border:1px solid #2a2a2a}
+.tier{background:#0a0a0a;padding:36px 28px;position:relative;display:flex;flex-direction:column}
+.tier.featured{background:#161010;border-top:3px solid var(--accent)}
+.tier.featured::before{content:"BEST VALUE";position:absolute;top:-3px;right:0;background:var(--accent);color:var(--bg);padding:6px 14px;font-size:10px;letter-spacing:0.18em;font-weight:700}
+.tier .tier-name{font-family:'Anton',sans-serif;font-size:32px;letter-spacing:0.04em;text-transform:uppercase;line-height:1}
+.tier .tier-price{margin:14px 0 6px;display:flex;align-items:baseline;gap:6px}
+.tier .tier-price .num{font-family:'Anton',sans-serif;font-size:84px;line-height:0.85;color:var(--accent);letter-spacing:-0.02em}
+.tier .tier-price .per{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0.1em;text-transform:uppercase}
+.tier .tier-quota{font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;color:var(--acid);margin-bottom:18px}
+.tier ul{list-style:none;margin:8px 0 24px;flex:1}
+.tier li{padding:9px 0;font-size:14px;border-bottom:1px dotted #2a2a2a;display:flex;gap:10px;align-items:flex-start;line-height:1.4;color:#ddd}
+.tier li::before{content:"→";color:var(--accent);flex-shrink:0;font-weight:700}
+.tier li.disabled{color:var(--muted)}
+.tier li.disabled::before{content:"×";color:var(--muted)}
+.tier li b{color:var(--acid)}
+.tier .btn{width:100%;justify-content:center;font-size:12px}
+
+/* ======================= FAQ ======================= */
+.faq-list{display:grid;gap:10px}
+.faq{background:var(--bg);border:2px solid var(--ink);overflow:hidden}
+.faq summary{padding:20px 24px;font-family:'Anton',sans-serif;font-size:20px;letter-spacing:0.01em;text-transform:uppercase;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;transition:background .15s}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary:hover{background:var(--paper)}
+.faq summary::after{content:"+";font-family:'Anton',sans-serif;font-size:32px;color:var(--accent);transition:transform .2s}
+.faq[open] summary::after{transform:rotate(45deg)}
+.faq[open] summary{background:var(--ink);color:var(--bg)}
+.faq[open] summary::after{color:var(--accent)}
+.faq .answer{padding:20px 24px;font-size:15px;line-height:1.6;color:var(--ink-soft);border-top:1px solid var(--ink)}
+.faq .answer b{color:var(--ink)}
+
+/* ======================= FINAL CTA ======================= */
+.final-cta{position:relative;z-index:2;padding:100px 28px;background:var(--accent);color:var(--bg);text-align:center;border-bottom:3px solid var(--ink);overflow:hidden}
+.final-cta::before{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");opacity:0.15;mix-blend-mode:multiply}
+.final-cta-inner{position:relative;z-index:2;max-width:980px;margin:0 auto}
+.final-cta .gc-logo{font-size:90px;color:var(--bg)}
+.final-cta .gc-logo .dot{color:var(--bg)}
+.final-cta .gc-logo .check{color:var(--ink)}
+.final-cta h2{font-family:'Anton',sans-serif;font-size:clamp(48px,8vw,108px);line-height:0.85;text-transform:uppercase;letter-spacing:-0.02em;margin:24px 0}
+.final-cta h2 .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--ink)}
+.final-cta p{font-family:'Instrument Serif',serif;font-style:italic;font-size:22px;line-height:1.4;margin-bottom:32px;max-width:680px;margin-left:auto;margin-right:auto}
+.final-cta .btn{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.final-cta .btn:hover{background:var(--bg);color:var(--ink);border-color:var(--bg);box-shadow:6px 6px 0 var(--ink)}
+
+/* ======================= FOOTER (logo as signature) ======================= */
+footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);background:var(--bg);position:relative;z-index:2}
+.foot-inner{max-width:1280px;margin:0 auto}
+.foot-mega .gc-logo{font-size:clamp(80px,18vw,260px);line-height:0.78;letter-spacing:-0.02em;margin-bottom:36px;display:block}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;border-top:1px solid var(--ink);padding-top:24px;font-size:13px;color:var(--muted);font-weight:500}
+.foot-grid b{color:var(--ink);display:block;margin-bottom:8px;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase}
+.foot-grid p{line-height:1.7}
+
+/* ======================= MODALS (account + paywall) ======================= */
+.modal-overlay{position:fixed;inset:0;background:rgba(13,13,13,0.85);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.modal-overlay.show{display:flex;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg);color:var(--ink);max-width:480px;width:100%;padding:0;border:3px solid var(--ink);position:relative;animation:slideUp .4s cubic-bezier(.2,.9,.3,1)}
+.modal .strip{background:var(--accent);color:var(--bg);padding:8px 24px;display:flex;justify-content:space-between;font-size:11px;letter-spacing:0.18em;font-weight:700;text-transform:uppercase}
+.modal .strip .gc-logo{font-size:14px;color:var(--bg)}
+.modal .strip .gc-logo .dot,.modal .strip .gc-logo .check{color:var(--bg)}
+.modal .body{padding:32px;position:relative}
+.modal .close{position:absolute;top:16px;right:16px;font-family:'Anton',sans-serif;font-size:32px;cursor:pointer;color:var(--ink);line-height:1}
+.modal h2{font-family:'Anton',sans-serif;font-size:42px;line-height:0.95;text-transform:uppercase;margin-bottom:14px;letter-spacing:-0.01em}
+.modal h2 .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent)}
+.modal .lede{font-size:14px;line-height:1.55;color:var(--ink-soft);margin-bottom:20px}
+.modal .lede b{color:var(--ink);font-weight:700}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:0.08em;text-transform:uppercase}
+.field input{width:100%;padding:14px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px}
+.field input:focus{outline:none;border-color:var(--accent)}
+
+.modal-btn{width:100%;padding:18px;background:var(--ink);color:var(--bg);border:2px solid var(--ink);font-family:'Anton',sans-serif;font-size:22px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px;line-height:1}
+.modal-btn:hover{background:var(--accent);border-color:var(--accent)}
+.modal-btn .arrow{font-family:'Instrument Serif',serif;font-style:italic;font-size:26px;font-weight:400}
+.modal-alt{margin-top:14px;font-size:12px;color:var(--muted);text-align:center;font-weight:500}
+.modal-alt a{color:var(--accent);font-weight:700;cursor:pointer}
+.modal-msg{padding:12px;font-size:13px;margin-top:12px;border-left:3px solid var(--accent);background:#ffe5e0;color:var(--accent)}
+.modal-msg.success{background:#e8ffd0;color:var(--good);border-color:var(--good)}
+
+.pw-tiers{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
+.pw-tier{background:var(--ink);color:var(--bg);padding:18px;cursor:pointer;border:2px solid var(--ink);transition:all .15s;position:relative}
+.pw-tier:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--accent)}
+.pw-tier.selected{border-color:var(--accent);background:#1a1010}
+.pw-tier.selected::before{content:"✓";position:absolute;top:8px;right:10px;color:var(--accent);font-weight:700}
+.pw-tier .pwt-name{font-family:'Anton',sans-serif;font-size:22px;letter-spacing:0.02em;text-transform:uppercase;line-height:1}
+.pw-tier .pwt-price{font-family:'Anton',sans-serif;font-size:46px;color:var(--accent);line-height:0.85;margin:8px 0 4px}
+.pw-tier .pwt-per{font-size:10px;color:#888;font-weight:600;letter-spacing:0.1em;text-transform:uppercase}
+.pw-tier .pwt-quota{font-family:'Instrument Serif',serif;font-style:italic;font-size:13px;color:var(--acid);margin-top:8px}
+
+/* ======================= HIDDEN SHARE CARD ======================= */
+.share-card{position:fixed;top:-9999px;left:-9999px;width:1080px;height:1350px;background:var(--ink);color:var(--bg);padding:80px 64px;font-family:'Inter',sans-serif;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.share-card::before{content:"";position:absolute;top:-200px;right:-200px;width:800px;height:800px;background:radial-gradient(circle, rgba(255,45,0,0.2), transparent 60%)}
+.share-card .sc-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2}
+.share-card .sc-brand .gc-logo{font-size:64px;color:var(--bg)}
+.share-card .sc-brand .gc-logo .dot{color:var(--bg)}
+.share-card .sc-meta{font-size:18px;letter-spacing:0.18em;text-transform:uppercase;text-align:right;color:#888;line-height:1.5;font-weight:600}
+.share-card .sc-meta b{color:var(--acid)}
+.share-card .sc-mid{position:relative;z-index:2}
+.share-card .sc-eyebrow{font-size:18px;letter-spacing:0.3em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;font-weight:700}
+.share-card .sc-lift{font-family:'Anton',sans-serif;font-size:140px;line-height:0.85;text-transform:uppercase;letter-spacing:-0.01em;margin-bottom:24px}
+.share-card .sc-lift .em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent)}
+.share-card .sc-score-row{display:flex;align-items:flex-end;gap:32px;margin:24px 0}
+.share-card .sc-score{font-family:'Anton',sans-serif;font-size:480px;line-height:0.78;color:var(--accent);letter-spacing:-0.04em}
+.share-card .sc-score-meta{font-family:'Instrument Serif',serif;font-style:italic;font-size:48px;color:var(--acid);line-height:1;padding-bottom:48px}
+.share-card .sc-verdict{font-family:'Instrument Serif',serif;font-size:36px;line-height:1.3;font-style:italic;margin-top:24px;max-width:90%}
+.share-card .sc-bottom{font-size:20px;letter-spacing:0.2em;text-transform:uppercase;border-top:2px solid var(--accent);padding-top:24px;display:flex;justify-content:space-between;position:relative;z-index:2;font-weight:700}
+.share-card .sc-bottom b{color:var(--accent)}
+
+/* ======================= MOBILE ======================= */
+@media (max-width:880px){
+  .nav{padding:14px 18px}
+  .nav-right a{padding:7px 12px;font-size:11px}
+  .hero{padding:36px 18px 32px}
+  .hero-grid{grid-template-columns:1fr;gap:36px}
+  .sample{transform:rotate(-1.5deg);max-width:340px}
+  .uploader{grid-template-columns:1fr;gap:18px}
+  .feat-grid,.steps,.compare{grid-template-columns:1fr}
+  .compare{border-bottom:none}
+  .tiers{grid-template-columns:1fr}
+  .stat-bar{grid-template-columns:repeat(2,1fr)}
+  .stat-bar .stat:nth-child(2){border-right:none}
+  .stat-bar .stat:nth-child(1),.stat-bar .stat:nth-child(2){border-bottom:1px solid #2a2a2a}
+  .section,.app-section{padding:48px 18px}
+  .section-head{flex-direction:column;align-items:flex-start}
+  .section-meta{text-align:left}
+  .result-card{padding:24px}
+  .result-head{grid-template-columns:1fr}
+  .score-display{text-align:left}
+  .score-num{font-size:108px}
+  .verdict{font-size:18px}
+  .verdict::first-letter{font-size:44px}
+  .pw-tiers{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:1fr;gap:18px}
+  .lift-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ======================= NAV ======================= -->
+<nav class="nav">
+  <div class="gc-logo">GYM<span class="check">check</span><span class="dot">.</span></div>
+  <div class="nav-right">
+    <a href="#pricing">PRICING</a>
+    <a href="#" class="cta" id="navAccountBtn">SIGN IN</a>
+  </div>
+</nav>
+
+<!-- ======================= HERO ======================= -->
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <h1 class="hero-headline">
+        YOUR FORM<br/>IS <span class="ital">cooked</span>.<br/>LET'S FIX IT.
+      </h1>
+
+      <p class="hero-promise">Upload one clip. In 20 seconds, get an <b>honest plain-English breakdown</b> of your form, what's wrong, and three exact fixes for your next set. No coach. No ego.</p>
+
+      <div class="hero-cta-row">
+        <a href="#app" class="btn big acid">CHECK MY FORM — FREE <span class="arrow">→</span></a>
+        <a href="#how" class="btn ghost">HOW IT WORKS</a>
+      </div>
+
+      <div class="hero-trust">
+        <span>FIRST CHECK FREE</span>
+        <span>NO CREDIT CARD</span>
+        <span>WORKS ON YOUR PHONE</span>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="sample">
+        <div class="sample-tape">SAMPLE REPORT</div>
+        <div class="sample-head">
+          <span>FORM REPORT</span>
+          <span>EXAMPLE</span>
+        </div>
+        <div class="sample-lift">BACK<br/>SQUAT<span class="em">.</span></div>
+        <div class="sample-score-block">
+          <div class="sample-score">62</div>
+          <div class="sample-score-meta">FORM<br/>SCORE<span class="grade">"close, fix it"</span></div>
+        </div>
+        <div class="sample-flag"><span class="nm">Knees caving in</span><span class="pill bad">FIX IT</span></div>
+        <div class="sample-flag"><span class="nm">Good depth</span><span class="pill good">NICE</span></div>
+        <div class="sample-flag"><span class="nm">Bar drifting forward</span><span class="pill warn">WATCH</span></div>
+        <div class="sample-flag"><span class="nm">Slight back rounding</span><span class="pill warn">WATCH</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= STAT BAR ======================= -->
+<div class="stat-bar">
+  <div class="stat">
+    <div class="num">20<span class="ital">s</span></div>
+    <div class="lbl">upload to verdict</div>
+  </div>
+  <div class="stat">
+    <div class="num">10<span class="ital">+</span></div>
+    <div class="lbl">lifts supported</div>
+  </div>
+  <div class="stat">
+    <div class="num">$80<span class="ital">/hr</span></div>
+    <div class="lbl">what a trainer charges</div>
+  </div>
+  <div class="stat">
+    <div class="num">$0<span class="ital">.</span></div>
+    <div class="lbl">your first check</div>
+  </div>
+</div>
+
+<!-- ======================= HOW IT WORKS ======================= -->
+<section class="section paper" id="how">
+  <div class="section-inner">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">/ HOW IT WORKS</div>
+        <h2 class="section-title">HOW IT <span class="ital">works</span>.</h2>
+      </div>
+      <div class="section-meta"><b>NO APP NEEDED</b>WORKS IN ANY BROWSER</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>UPLOAD <span class="ital">your</span> CLIP</h3>
+        <p>A phone video of your squat, bench, deadlift, or any of 10 supported lifts. Side angle works best. One rep is plenty.</p>
+        <div class="duration"><b>~5 SEC</b> · JPG · PNG · MP4 · MOV</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>WE <span class="ital">break it down</span></h3>
+        <p>The AI checks the same things a coach would — depth, knee tracking, bar path, back position — and tells you exactly what's happening.</p>
+        <div class="duration"><b>~10 SEC</b> · AI VISION</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>GET <span class="ital">3 fixes</span></h3>
+        <p>A 1–100 score, a clear verdict in plain English, what's flagged, and three cues for your next set. No jargon, no fluff.</p>
+        <div class="duration"><b>~5 SEC</b> · CLEAR &amp; ACTIONABLE</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= COMPARISON ======================= -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">/ WHY IT MATTERS</div>
+        <h2 class="section-title">LIFTING ALONE<br/>= LIFTING <span class="ital">blind</span>.</h2>
+      </div>
+      <div class="section-meta"><b>BE HONEST</b>WHICH ONE'S YOU?</div>
+    </div>
+
+    <div class="compare">
+      <div class="compare-col before">
+        <div class="label">/ WITHOUT GYMcheck</div>
+        <h3>YOU'RE <span class="ital">guessing</span>.</h3>
+        <ul class="compare-list">
+          <li>Hoping your form is fine because nothing hurts <i>yet</i></li>
+          <li>Watching YouTube but not knowing if your reps actually match</li>
+          <li>Asking the bro at your gym who learned form from another bro</li>
+          <li>One bad rep from a tweaked back that ends your year</li>
+          <li>No way to know if you're getting better or worse</li>
+          <li>Or paying $80/hr for a coach who half-watches you</li>
+        </ul>
+      </div>
+      <div class="compare-col after">
+        <div class="label">/ WITH GYMcheck</div>
+        <h3>YOU <span class="ital">know</span>.</h3>
+        <ul class="compare-list">
+          <li>Real feedback in plain English after every working set</li>
+          <li>Issues like "knees caving" or "back rounding" — caught early</li>
+          <li>Three cues you can use on your <i>next</i> set, not next week</li>
+          <li>A form score that climbs as you improve, week over week</li>
+          <li>Less per month than one trainer session</li>
+          <li>Screenshot-ready reports for your training log</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= APP / UPLOAD ======================= -->
+<section class="app-section" id="app">
+  <div class="app-inner">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">/ TRY IT NOW</div>
+        <h2 class="section-title">DROP YOUR LIFT.<br/>GET YOUR <span class="ital">score</span>.</h2>
+      </div>
+      <div class="section-meta"><b>FREE FIRST CHECK</b>NO LOGIN · NO CARD</div>
+    </div>
+
+    <div class="uploader">
+      <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="dz-mark" id="dzMark">+</div>
+        <div class="dz-title" id="dzTitle">UPLOAD <span class="ital">your</span> CLIP</div>
+        <div class="dz-sub" id="dzSub">JPG · PNG · MP4 · MOV — MAX 10MB</div>
+        <div class="dz-sub-2">side angle works best</div>
+        <input type="file" id="fileInput" accept="image/*,video/*" />
+      </div>
+
+      <div class="controls">
+        <div>
+          <div class="ctrl-label"><span>WHICH LIFT?</span><span class="req">required</span></div>
+          <div class="lift-grid" id="liftSelect">
+            <button class="lift-btn active" data-lift="Back Squat">SQUAT</button>
+            <button class="lift-btn" data-lift="Front Squat">FRONT SQ.</button>
+            <button class="lift-btn" data-lift="Bench Press">BENCH</button>
+            <button class="lift-btn" data-lift="Deadlift">DEADLIFT</button>
+            <button class="lift-btn" data-lift="Romanian Deadlift">RDL</button>
+            <button class="lift-btn" data-lift="Overhead Press">OHP</button>
+            <button class="lift-btn" data-lift="Barbell Row">ROW</button>
+            <button class="lift-btn" data-lift="Hip Thrust">HIP THRUST</button>
+            <button class="lift-btn" data-lift="Pull-up">PULL-UP</button>
+            <button class="lift-btn" data-lift="Dip">DIP</button>
+          </div>
+        </div>
+        <div>
+          <div class="ctrl-label"><span>EXTRA CONTEXT</span><span style="font-size:10px">OPTIONAL</span></div>
+          <textarea class="notes" id="notes" placeholder="225 x 5, week 4 of program, lower back tight..."></textarea>
+        </div>
+        <div class="legal-notice">
+          <b>Heads up:</b> GYMcheck gives automated feedback for educational purposes only. <b>It is not medical advice</b> and is not a substitute for a coach or doctor. By analyzing, you agree to our <a href="/terms.html">Terms</a> and <a href="/disclaimer.html">Fitness Disclaimer</a>.
+        </div>
+        <button class="analyze" id="analyzeBtn" disabled>
+          <span>ANALYZE FORM</span><span class="arrow">→</span>
+        </button>
+        <div class="usage" id="usage">
+          <span>FREE CHECKS LEFT: <b><span id="freeCount">1</span></b></span>
+          <span style="font-style:italic;font-family:'Instrument Serif',serif;font-size:14px">no card needed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spin-wrap">
+        <div class="spin"></div>
+        <div class="spin sec"></div>
+      </div>
+      <div class="status" id="loadStatus">ANALYZING YOUR FORM</div>
+      <div class="sub">USUALLY 5–15 SECONDS</div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-card">
+        <div class="result-brand">
+          <div class="gc-logo">GYM<span class="check">check</span><span class="dot">.</span></div>
+          <div class="stamp">FORM REPORT</div>
+        </div>
+        <div class="result-head">
+          <div>
+            <div class="lift-label">YOUR LIFT</div>
+            <div class="result-lift" id="resultLift">REPORT<span class="em">.</span></div>
+          </div>
+          <div class="score-display">
+            <span class="score-num" id="scoreNum">--</span>
+            <div class="score-label">FORM SCORE / 100</div>
+            <span class="score-grade" id="scoreGrade"></span>
+          </div>
+        </div>
+
+        <div class="result-section">
+          <div class="sec-label">THE VERDICT</div>
+          <p class="verdict" id="verdictText">—</p>
+        </div>
+
+        <div class="result-section">
+          <div class="sec-label">WHAT WE SAW</div>
+          <div class="flag-list" id="flagList"></div>
+        </div>
+
+        <div class="result-section">
+          <div class="sec-label">3 FIXES FOR YOUR NEXT SET</div>
+          <div class="fix-list" id="fixList"></div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn acid" id="shareBtn">↓ DOWNLOAD SHARE CARD</button>
+          <button class="btn ghost" id="newBtn" style="border-color:var(--bg);color:var(--bg)">NEW CHECK</button>
+        </div>
+
+        <div class="result-disclaimer">
+          <b>Reminder:</b> This is automated AI feedback for educational purposes — not medical advice. AI can be wrong. If something hurts or feels off, listen to your body and talk to a qualified coach or physician. <a href="/disclaimer.html" target="_blank">Full disclaimer →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FEATURES ======================= -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">/ WHAT YOU GET</div>
+        <h2 class="section-title">WHAT YOUR COACH<br/>WOULD <span class="ital">notice</span>.</h2>
+      </div>
+      <div class="section-meta"><b>SIX REASONS</b>WHY THIS WORKS</div>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="feat-icon">!</div>
+        <h4>CATCH IT <span class="ital">early</span></h4>
+        <p>Every check flags issues like <b>knees caving in, back rounding, or hips rising too fast</b> — the silent killers that put lifters out for months.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">100<span class="ital">.</span></div>
+        <h4>A REAL <span class="ital">score</span></h4>
+        <p>"Looks fine bro" is not feedback. <b>A 1–100 form score</b> means you can actually track if you're improving week over week.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">3<span class="ital">×</span></div>
+        <h4>USABLE <span class="ital">fixes</span></h4>
+        <p>Every report ends with <b>three specific cues</b>, not vague advice. "Drive your knees out as you stand up." Take it into your next set.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">10<span class="ital">+</span></div>
+        <h4>EVERY MAJOR <span class="ital">lift</span></h4>
+        <p>Squat, bench, deadlift, OHP, row, RDL, hip thrust, pull-up, dip, and more. <b>The lifts you actually do.</b></p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">$</div>
+        <h4>WAY <span class="ital">cheaper</span></h4>
+        <p>One trainer session: <b>$80</b>. One full month of GYMcheck: <b>$12</b>. The math isn't subtle.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">↗</div>
+        <h4>PROVABLE <span class="ital">progress</span></h4>
+        <p><b>Form history tracking</b> means you can see — and show — that you went from a 62 to an 89 over 8 weeks. Real receipts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PRICING ======================= -->
+<section class="section dark" id="pricing">
+  <div class="section-inner">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">/ PICK YOUR PLAN</div>
+        <h2 class="section-title">LESS THAN <br/><span class="ital">one</span> SESSION.</h2>
+      </div>
+      <div class="section-meta"><b>SIMPLE</b>3 PLANS · CANCEL ANY TIME</div>
+    </div>
+
+    <div class="tiers">
+      <div class="tier">
+        <div class="tier-name">FREE</div>
+        <div class="tier-price"><span class="num">$0</span><span class="per">/ ONCE</span></div>
+        <div class="tier-quota">1 form check, ever</div>
+        <ul>
+          <li>Full form score + verdict</li>
+          <li>What we saw (flags)</li>
+          <li>Shareable card</li>
+          <li class="disabled">No specific fixes</li>
+          <li class="disabled">No history tracking</li>
+        </ul>
+        <a href="#app" class="btn ghost" style="border-color:var(--bg);color:var(--bg)">START FREE</a>
+      </div>
+
+      <div class="tier featured">
+        <div class="tier-name">PRO</div>
+        <div class="tier-price"><span class="num">$12</span><span class="per">/ MONTH</span></div>
+        <div class="tier-quota">30 checks per month</div>
+        <ul>
+          <li>Everything in Free</li>
+          <li><b>3 specific fixes per check</b></li>
+          <li><b>All injury flags explained</b></li>
+          <li>Form history (coming soon)</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <button class="btn" onclick="openPaywall('pro')">UPGRADE TO PRO <span class="arrow">→</span></button>
+      </div>
+
+      <div class="tier">
+        <div class="tier-name">PRO+</div>
+        <div class="tier-price"><span class="num">$29</span><span class="per">/ MONTH</span></div>
+        <div class="tier-quota">150 checks per month</div>
+        <ul>
+          <li>Everything in Pro</li>
+          <li><b>5× the checks</b></li>
+          <li>Priority response speed</li>
+          <li>For lifters who train 5–6×/wk</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <button class="btn acid" onclick="openPaywall('proplus')">GO PRO+ <span class="arrow">→</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FAQ ======================= -->
+<section class="section paper" id="faq">
+  <div class="section-inner">
+    <div class="section-head">
+      <div>
+        <div class="section-eyebrow">/ COMMON QUESTIONS</div>
+        <h2 class="section-title">QUICK <span class="ital">questions</span>.</h2>
+      </div>
+      <div class="section-meta"><b>STILL UNSURE?</b>READ THESE</div>
+    </div>
+
+    <div class="faq-list">
+      <details class="faq">
+        <summary>How accurate is it really?</summary>
+        <div class="answer">It catches the big things a coach would catch in a quick look — knees caving, back rounding, depth, bar path, hip movement. It's not a substitute for an elite strength coach who knows your specific history. But for the 95% of lifters who train alone and have never had a coach watch them, <b>it's a massive upgrade over guessing.</b></div>
+      </details>
+      <details class="faq">
+        <summary>What lifts can I check?</summary>
+        <div class="answer">Squat (back &amp; front), bench press, deadlift (and RDL), overhead press, barbell row, hip thrust, pull-up, dip — and a generic "Other" option for anything else. Just film from the side for the best read.</div>
+      </details>
+      <details class="faq">
+        <summary>Do you store my videos?</summary>
+        <div class="answer"><b>No.</b> Videos are processed in real time and never saved. Free users have nothing stored at all. Pro users get the result (score, verdict, flags) saved so they can track progress — but the original clip is never kept.</div>
+      </details>
+      <details class="faq">
+        <summary>Can I cancel anytime?</summary>
+        <div class="answer">Yes. One click in the billing portal. No call to cancel, no "are you sure" loops, no email forms. You'll keep your remaining checks until the end of your billing month, then you're done.</div>
+      </details>
+      <details class="faq">
+        <summary>I'm a beginner — is this for me?</summary>
+        <div class="answer">Especially for you. Beginners have the most to gain because <b>bad habits cement fast.</b> Getting honest feedback on day 30 vs day 300 is the difference between "I lift 3x/wk" and "I'm rehabbing a herniated disc."</div>
+      </details>
+      <details class="faq">
+        <summary>Will this replace my coach?</summary>
+        <div class="answer">If your coach is a programming/nutrition/mindset guy: no, those things matter and AI can't do them. If your coach is purely a "watch me squat" guy that you pay $80/hr for: <b>yes, this can probably replace 80% of what you're getting</b> — for a tiny fraction of the cost.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FINAL CTA ======================= -->
+<section class="final-cta">
+  <div class="final-cta-inner">
+    <div class="gc-logo">GYM<span class="check">check</span><span class="dot">.</span></div>
+    <h2>STOP LIFTING <span class="ital">blind</span>.</h2>
+    <p>Your first check is free. No login. No card. Twenty seconds from now you'll know exactly what's wrong with your form — and three ways to fix it before your next set.</p>
+    <a href="#app" class="btn big">CHECK MY FORM <span class="arrow">→</span></a>
+  </div>
+</section>
+
+<!-- ======================= FOOTER (logo signature) ======================= -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-mega">
+      <div class="gc-logo">GYM<span class="check">check</span><span class="dot">.</span></div>
+    </div>
+    <div class="foot-grid">
+      <div>
+        <b>THE PRODUCT</b>
+        <p>Built for lifters who train alone, film themselves, and want honest feedback without paying $80 an hour for a coach who's checking his phone.</p>
+      </div>
+      <div>
+        <b>THE FINE PRINT</b>
+        <p>Not medical advice. If you're injured, see a professional. GYMcheck is a tool, not a substitute for a real coach when you're going for max effort.</p>
+      </div>
+      <div>
+        <b>QUESTIONS?</b>
+        <p>Reach out: hi@gymcheck.app</p>
+        <p style="margin-top:8px">© GYMcheck</p>
+      </div>
+    </div>
+    <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--ink);display:flex;gap:18px;flex-wrap:wrap;font-size:12px;font-weight:600">
+      <a href="/terms.html">Terms of Service</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/disclaimer.html">Fitness Disclaimer</a>
+      <span style="color:var(--muted);font-weight:400">Not medical advice. Lift at your own risk.</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ======================= ACCOUNT MODAL ======================= -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal">
+    <div class="strip">
+      <div class="gc-logo">GYM<span class="check">check</span><span class="dot">.</span></div>
+      <span id="acctStripLabel">SIGN IN</span>
+    </div>
+    <div class="body">
+      <span class="close" onclick="closeAccount()">×</span>
+      <h2 id="acctTitle">SIGN <span class="ital">in</span>.</h2>
+      <p class="lede" id="acctLede">Pro members sign in here to access your monthly checks and form history.</p>
+
+      <div class="field">
+        <label>EMAIL</label>
+        <input type="email" id="acctEmail" placeholder="you@email.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>PASSWORD</label>
+        <input type="password" id="acctPassword" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+
+      <div class="agreement" id="acctAgreement" style="display:none">
+        <input type="checkbox" id="acctAgreeBox" />
+        <label for="acctAgreeBox">I'm 18+ and I've read the <a href="/terms.html" target="_blank">Terms</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/disclaimer.html" target="_blank">Fitness Disclaimer</a>. <b>I understand GYMcheck is not medical advice and I assume the risks of weightlifting.</b></label>
+      </div>
+
+      <button class="modal-btn" id="acctSubmit">SIGN IN <span class="arrow">→</span></button>
+      <div class="modal-msg" id="acctMsg" style="display:none"></div>
+
+      <div class="modal-alt" id="acctSwitch">
+        New here? <a onclick="switchAccountMode('signup')">Create an account</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= PAYWALL ======================= -->
+<div class="modal-overlay" id="paywall">
+  <div class="modal">
+    <div class="strip">
+      <span>● UPGRADE REQUIRED</span>
+      <div class="gc-logo">GYM<span class="check">check</span><span class="dot">.</span></div>
+    </div>
+    <div class="body">
+      <span class="close" onclick="closePaywall()">×</span>
+      <h2>FREE CHECK <span class="ital">used.</span></h2>
+      <p class="lede"><b>For less than a coffee a week</b>, get honest form feedback every time you lift. Pick a plan. Cancel any time.</p>
+
+      <div class="pw-tiers">
+        <div class="pw-tier selected" data-tier="pro" onclick="selectTier('pro')">
+          <div class="pwt-name">PRO</div>
+          <div class="pwt-price">$12</div>
+          <div class="pwt-per">/ MONTH</div>
+          <div class="pwt-quota">30 checks/mo</div>
+        </div>
+        <div class="pw-tier" data-tier="proplus" onclick="selectTier('proplus')">
+          <div class="pwt-name">PRO+</div>
+          <div class="pwt-price">$29</div>
+          <div class="pwt-per">/ MONTH</div>
+          <div class="pwt-quota">150 checks/mo</div>
+        </div>
+      </div>
+
+      <div class="agreement">
+        <input type="checkbox" id="paywallAgreeBox" />
+        <label for="paywallAgreeBox">I'm 18+ and I've read the <a href="/terms.html" target="_blank">Terms</a>, <a href="/privacy.html" target="_blank">Privacy Policy</a>, and <a href="/disclaimer.html" target="_blank">Fitness Disclaimer</a>. <b>I understand GYMcheck is not medical advice.</b></label>
+      </div>
+
+      <button class="modal-btn" onclick="checkout()">UPGRADE NOW <span class="arrow">→</span></button>
+      <div class="modal-alt">SECURE CHECKOUT · STRIPE · CANCEL ANY TIME</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= SHARE CARD ======================= -->
+<div class="share-card" id="shareCard">
+  <div class="sc-top">
+    <div class="sc-brand"><div class="gc-logo">GYM<span class="check">check</span><span class="dot">.</span></div></div>
+    <div class="sc-meta">FORM REPORT<br/><b id="scDate">—</b></div>
+  </div>
+  <div class="sc-mid">
+    <div class="sc-eyebrow">/ FORM ANALYSIS</div>
+    <div class="sc-lift" id="scLift">SQUAT<span class="em">.</span></div>
+    <div class="sc-score-row">
+      <div class="sc-score" id="scScore">62</div>
+      <div class="sc-score-meta" id="scGrade">"close, fix it"</div>
+    </div>
+    <div class="sc-verdict" id="scVerdict">Knees are caving in on the way up. Good depth though. Fixable.</div>
+  </div>
+  <div class="sc-bottom">
+    <span><b>GYMCHECK.APP</b></span>
+    <span>GET YOURS →</span>
+  </div>
+</div>
+
+<script>
+/* ============== STATE ============== */
+let selectedFile=null;
+let selectedLift='Back Squat';
+let lastResult=null;
+let selectedTier='pro';
+let acctMode='signin'; // signin | signup
+
+const FREE_LIMIT=1;
+const PRO_LIMIT=30;
+const PROPLUS_LIMIT=150;
+
+const monthKey=new Date().toISOString().slice(0,7);
+
+/* Lightweight account system using localStorage (upgrade to Supabase later) */
+function currentUser(){
+  try{return JSON.parse(localStorage.getItem('gc_session')||'null');}catch{return null;}
+}
+function setSession(user){localStorage.setItem('gc_session',JSON.stringify(user));}
+function clearSession(){localStorage.removeItem('gc_session');}
+
+function getAccount(email){
+  try{return JSON.parse(localStorage.getItem('gc_acct_'+email.toLowerCase())||'null');}catch{return null;}
+}
+function setAccount(email,data){localStorage.setItem('gc_acct_'+email.toLowerCase(),JSON.stringify(data));}
+
+let session=currentUser();
+let freeUsed=parseInt(localStorage.getItem('gc_free_used')||'0');
+
+function getMonthlyLimit(){
+  if(!session)return 0;
+  if(session.plan==='proplus')return PROPLUS_LIMIT;
+  if(session.plan==='pro')return PRO_LIMIT;
+  return 0;
+}
+
+function getMonthlyUsed(){
+  if(!session)return 0;
+  const acct=getAccount(session.email);
+  if(!acct)return 0;
+  return acct.usage?.[monthKey]||0;
+}
+
+function canAnalyze(){
+  if(session && session.plan){
+    return getMonthlyUsed()<getMonthlyLimit();
+  }
+  return freeUsed<FREE_LIMIT;
+}
+
+function burnCheck(){
+  if(session && session.plan){
+    const acct=getAccount(session.email)||{};
+    acct.usage=acct.usage||{};
+    acct.usage[monthKey]=(acct.usage[monthKey]||0)+1;
+    setAccount(session.email,acct);
+  }else{
+    freeUsed++;
+    localStorage.setItem('gc_free_used',String(freeUsed));
+  }
+  updateUsage();
+}
+
+function updateUsage(){
+  const el=document.getElementById('usage');
+  if(session && session.plan){
+    const limit=getMonthlyLimit();
+    const used=getMonthlyUsed();
+    const remaining=Math.max(0,limit-used);
+    const planName=session.plan==='proplus'?'PRO+':'PRO';
+    el.innerHTML=`<span><span class="pro-badge">${planName}</span>${remaining}/${limit} CHECKS LEFT THIS MONTH</span><span style="font-style:italic;font-family:'Instrument Serif',serif;font-size:14px">resets monthly</span>`;
+  }else{
+    const remaining=Math.max(0,FREE_LIMIT-freeUsed);
+    el.innerHTML=`<span>FREE CHECKS LEFT: <b>${remaining}</b></span><span style="font-style:italic;font-family:'Instrument Serif',serif;font-size:14px">no card needed</span>`;
+  }
+}
+
+function updateNav(){
+  const btn=document.getElementById('navAccountBtn');
+  if(session){
+    btn.textContent='SIGN OUT';
+    btn.onclick=(e)=>{e.preventDefault();clearSession();session=null;updateNav();updateUsage();};
+  }else{
+    btn.textContent='SIGN IN';
+    btn.onclick=(e)=>{e.preventDefault();openAccount('signin');};
+  }
+}
+
+updateUsage();
+updateNav();
+
+/* ============== LIFT SELECT ============== */
+document.querySelectorAll('.lift-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.lift-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    selectedLift=b.dataset.lift;
+  });
+});
+
+/* ============== UPLOAD ============== */
+const dz=document.getElementById('dropzone');
+const fi=document.getElementById('fileInput');
+fi.addEventListener('change',e=>handleFile(e.target.files[0]));
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('has-file')});
+dz.addEventListener('dragleave',()=>{if(!selectedFile)dz.classList.remove('has-file')});
+dz.addEventListener('drop',e=>{e.preventDefault();handleFile(e.dataTransfer.files[0])});
+
+function handleFile(f){
+  if(!f)return;
+  if(f.size>10*1024*1024){alert('File too big. Max 10MB.');return}
+  selectedFile=f;
+  dz.classList.add('has-file');
+  dz.innerHTML='<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>';
+  if(f.type.startsWith('video/')){
+    const v=document.createElement('video');
+    v.src=URL.createObjectURL(f);v.controls=true;v.muted=true;v.style.maxHeight='280px';
+    dz.appendChild(v);
+  }else{
+    const img=document.createElement('img');
+    img.src=URL.createObjectURL(f);
+    dz.appendChild(img);
+  }
+  const meta=document.createElement('div');
+  meta.className='dz-uploaded';
+  meta.textContent='LOADED · '+f.name.slice(0,28)+(f.name.length>28?'...':'');
+  dz.appendChild(meta);
+  document.getElementById('analyzeBtn').disabled=false;
+}
+
+/* ============== ANALYZE ============== */
+document.getElementById('analyzeBtn').addEventListener('click',analyzeForm);
+
+async function analyzeForm(){
+  if(!selectedFile)return;
+  if(!canAnalyze()){
+    openPaywall(session?.plan==='pro'?'proplus':'pro');
+    return;
+  }
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('analyzeBtn').disabled=true;
+
+  const msgs=['ANALYZING YOUR FORM','CHECKING YOUR JOINTS','LOOKING FOR PROBLEMS','SCORING THE LIFT','WRITING YOUR REPORT'];
+  let i=0;
+  const loadInterval=setInterval(()=>{
+    i=(i+1)%msgs.length;
+    document.getElementById('loadStatus').textContent=msgs[i];
+  },2400);
+
+  try{
+    let imageData;
+    if(selectedFile.type.startsWith('video/')){
+      imageData=await extractVideoFrame(selectedFile);
+    }else{
+      imageData=await fileToBase64(selectedFile);
+    }
+    const notes=document.getElementById('notes').value.trim();
+    const response=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:imageData,lift:selectedLift,notes:notes})
+    });
+    if(!response.ok){
+      const errData=await response.json().catch(()=>({}));
+      throw new Error(errData.error||('API error: '+response.status));
+    }
+    const result=await response.json();
+    clearInterval(loadInterval);
+    lastResult=result;
+    renderResult(result);
+    burnCheck();
+  }catch(err){
+    clearInterval(loadInterval);
+    alert('Analysis failed. Try again.\n\n'+err.message);
+  }finally{
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('analyzeBtn').disabled=false;
+  }
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      const result=r.result;
+      const [meta,data]=result.split(',');
+      const media_type=meta.match(/data:(.*?);/)[1];
+      res({media_type,data});
+    };
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function extractVideoFrame(file){
+  return new Promise((res,rej)=>{
+    const v=document.createElement('video');
+    v.src=URL.createObjectURL(file);
+    v.muted=true;
+    v.addEventListener('loadeddata',()=>{v.currentTime=Math.min(v.duration/2,2)});
+    v.addEventListener('seeked',()=>{
+      const canvas=document.createElement('canvas');
+      canvas.width=v.videoWidth;
+      canvas.height=v.videoHeight;
+      canvas.getContext('2d').drawImage(v,0,0);
+      const dataUrl=canvas.toDataURL('image/jpeg',0.85);
+      const data=dataUrl.split(',')[1];
+      res({media_type:'image/jpeg',data});
+    });
+    v.addEventListener('error',rej);
+  });
+}
+
+function gradeFor(score){
+  if(score>=90)return 'elite work';
+  if(score>=80)return 'solid';
+  if(score>=70)return 'pretty good';
+  if(score>=60)return 'close, fix it';
+  if(score>=45)return 'needs work';
+  if(score>0)return 'rough — fix asap';
+  return 'try again';
+}
+
+function renderResult(r){
+  document.getElementById('scoreNum').textContent=r.score;
+  document.getElementById('verdictText').textContent=r.verdict;
+  document.getElementById('scoreGrade').textContent='"'+gradeFor(r.score)+'"';
+  document.getElementById('resultLift').innerHTML=(r.lift_confirmed||selectedLift).toUpperCase()+'<span class="em">.</span>';
+  const scoreEl=document.getElementById('scoreNum');
+  if(r.score>=80) scoreEl.style.color='var(--good)';
+  else if(r.score>=60) scoreEl.style.color='var(--warn)';
+  else scoreEl.style.color='var(--accent)';
+
+  const flagList=document.getElementById('flagList');
+  flagList.innerHTML='';
+  (r.flags||[]).forEach(f=>{
+    const sev=f.severity||'warn';
+    const div=document.createElement('div');
+    div.className='flag-item '+sev;
+    const badgeText=sev==='good'?'GOOD':sev==='bad'?'FIX IT':'WATCH';
+    div.innerHTML=`<span class="indicator"></span><div class="body"><b>${escapeHtml(f.name)}</b>${escapeHtml(f.note)}</div><span class="badge">${badgeText}</span>`;
+    flagList.appendChild(div);
+  });
+
+  const fixList=document.getElementById('fixList');
+  fixList.innerHTML='';
+  (r.fixes||[]).forEach(f=>{
+    const div=document.createElement('div');
+    div.className='fix-item';
+    div.innerHTML=`<div class="body">${escapeHtml(f.text).replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div>`;
+    fixList.appendChild(div);
+  });
+
+  document.getElementById('result').classList.add('show');
+  setTimeout(()=>document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+/* ============== ACCOUNT MODAL ============== */
+function openAccount(mode){
+  acctMode=mode||'signin';
+  document.getElementById('accountModal').classList.add('show');
+  switchAccountMode(acctMode);
+  document.getElementById('acctMsg').style.display='none';
+  document.getElementById('acctEmail').value='';
+  document.getElementById('acctPassword').value='';
+}
+function closeAccount(){document.getElementById('accountModal').classList.remove('show')}
+document.getElementById('accountModal').addEventListener('click',e=>{if(e.target.id==='accountModal')closeAccount()});
+
+function switchAccountMode(mode){
+  acctMode=mode;
+  if(mode==='signup'){
+    document.getElementById('acctTitle').innerHTML='CREATE <span class="ital">account</span>.';
+    document.getElementById('acctLede').textContent='Set up your account to access Pro features after upgrading.';
+    document.getElementById('acctSubmit').innerHTML='CREATE ACCOUNT <span class="arrow">→</span>';
+    document.getElementById('acctStripLabel').textContent='SIGN UP';
+    document.getElementById('acctSwitch').innerHTML='Have an account? <a onclick="switchAccountMode(\'signin\')">Sign in</a>';
+    document.getElementById('acctAgreement').style.display='flex';
+  }else{
+    document.getElementById('acctTitle').innerHTML='SIGN <span class="ital">in</span>.';
+    document.getElementById('acctLede').textContent='Pro members sign in here to access your monthly checks.';
+    document.getElementById('acctSubmit').innerHTML='SIGN IN <span class="arrow">→</span>';
+    document.getElementById('acctStripLabel').textContent='SIGN IN';
+    document.getElementById('acctSwitch').innerHTML='New here? <a onclick="switchAccountMode(\'signup\')">Create an account</a>';
+    document.getElementById('acctAgreement').style.display='none';
+  }
+}
+
+function showAcctMsg(text,type){
+  const el=document.getElementById('acctMsg');
+  el.textContent=text;
+  el.className='modal-msg '+(type||'');
+  el.style.display='block';
+}
+
+document.getElementById('acctSubmit').addEventListener('click',handleAccountSubmit);
+
+async function hashPw(pw){
+  const enc=new TextEncoder();
+  const data=enc.encode(pw);
+  const buf=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function handleAccountSubmit(){
+  const email=document.getElementById('acctEmail').value.trim().toLowerCase();
+  const pw=document.getElementById('acctPassword').value;
+  if(!email||!pw)return showAcctMsg('Email and password required.');
+  if(pw.length<6)return showAcctMsg('Password must be at least 6 characters.');
+
+  const pwHash=await hashPw(pw);
+
+  if(acctMode==='signup'){
+    if(!document.getElementById('acctAgreeBox').checked){
+      return showAcctMsg('Please confirm you agree to our Terms, Privacy, and Disclaimer.');
+    }
+    if(getAccount(email))return showAcctMsg('Account already exists. Sign in instead.');
+    setAccount(email,{email,pwHash,plan:'free',createdAt:Date.now(),usage:{},agreedAt:Date.now()});
+    setSession({email,plan:'free'});
+    session=currentUser();
+    updateNav();
+    updateUsage();
+    showAcctMsg('Account created!','success');
+    setTimeout(closeAccount,800);
+  }else{
+    const acct=getAccount(email);
+    if(!acct||acct.pwHash!==pwHash)return showAcctMsg('Wrong email or password.');
+    setSession({email,plan:acct.plan||'free'});
+    session=currentUser();
+    updateNav();
+    updateUsage();
+    showAcctMsg('Signed in!','success');
+    setTimeout(closeAccount,600);
+  }
+}
+
+/* ============== PAYWALL ============== */
+function openPaywall(tier){
+  if(tier)selectTier(tier);
+  document.getElementById('paywall').classList.add('show');
+}
+function closePaywall(){document.getElementById('paywall').classList.remove('show')}
+document.getElementById('paywall').addEventListener('click',e=>{if(e.target.id==='paywall')closePaywall()});
+
+function selectTier(tier){
+  selectedTier=tier;
+  document.querySelectorAll('.pw-tier').forEach(el=>{
+    el.classList.toggle('selected',el.dataset.tier===tier);
+  });
+}
+
+async function checkout(){
+  if(!document.getElementById('paywallAgreeBox').checked){
+    alert('Please confirm you agree to our Terms, Privacy, and Disclaimer first.');
+    return;
+  }
+  const STRIPE_LINKS={
+    pro: window.STRIPE_LINK_PRO || '',
+    proplus: window.STRIPE_LINK_PROPLUS || ''
+  };
+  const link=STRIPE_LINKS[selectedTier];
+  if(link){window.location.href=link;return;}
+
+  // TEST MODE: simulate upgrade locally + create account if needed
+  const email=session?.email||prompt('TEST MODE: Enter an email to simulate upgrade:');
+  if(!email)return;
+  let acct=getAccount(email);
+  if(!acct){
+    acct={email,pwHash:'',plan:selectedTier,createdAt:Date.now(),usage:{}};
+  }else{
+    acct.plan=selectedTier;
+    acct.usage=acct.usage||{};
+    acct.usage[monthKey]=0;
+  }
+  setAccount(email,acct);
+  setSession({email,plan:selectedTier});
+  session=currentUser();
+  updateNav();
+  updateUsage();
+  closePaywall();
+  alert('✓ Welcome to '+(selectedTier==='proplus'?'PRO+':'PRO')+'. '+getMonthlyLimit()+' checks unlocked.');
+}
+
+/* ============== SHARE CARD ============== */
+document.getElementById('shareBtn').addEventListener('click',generateShareCard);
+document.getElementById('newBtn').addEventListener('click',()=>{
+  selectedFile=null;
+  dz.classList.remove('has-file');
+  dz.innerHTML='<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><div class="dz-mark">+</div><div class="dz-title">UPLOAD <span class="ital">your</span> CLIP</div><div class="dz-sub">JPG · PNG · MP4 · MOV — MAX 10MB</div><div class="dz-sub-2">side angle works best</div>';
+  fi.value='';
+  document.getElementById('analyzeBtn').disabled=true;
+  document.getElementById('result').classList.remove('show');
+  window.scrollTo({top:document.getElementById('app').offsetTop,behavior:'smooth'});
+});
+
+async function generateShareCard(){
+  if(!lastResult)return;
+  document.getElementById('scLift').innerHTML=(lastResult.lift_confirmed||selectedLift).toUpperCase()+'<span class="em">.</span>';
+  document.getElementById('scScore').textContent=lastResult.score;
+  document.getElementById('scGrade').textContent='"'+gradeFor(lastResult.score)+'"';
+  document.getElementById('scVerdict').textContent=lastResult.verdict;
+  document.getElementById('scDate').textContent=new Date().toISOString().split('T')[0];
+  if(!window.html2canvas){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    document.head.appendChild(s);
+    await new Promise(r=>s.onload=r);
+  }
+  const card=document.getElementById('shareCard');
+  card.style.top='0';card.style.left='0';card.style.zIndex='-1';
+  const canvas=await window.html2canvas(card,{backgroundColor:'#0d0d0d',width:1080,height:1350,scale:1});
+  card.style.top='-9999px';card.style.left='-9999px';
+  const link=document.createElement('a');
+  link.download=`gymcheck-${(lastResult.lift_confirmed||selectedLift).toLowerCase().replace(/\s/g,'-')}-${lastResult.score}.png`;
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
