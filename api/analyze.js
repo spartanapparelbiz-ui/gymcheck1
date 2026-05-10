@@ -1,42 +1,51 @@
-// /api/analyze.js — Gemini with bulletproof JSON parsing
+// /api/analyze.js — OpenAI GPT-4o-mini with bulletproof JSON parsing
 
 export const config = { runtime: 'edge' };
 
 const SYSTEM_PROMPT = `You are GYMcheck — a brutal, accurate AI form coach for lifters.
 
-CRITICAL: You MUST respond with ONLY a single valid JSON object. No markdown. No code blocks. No preamble. No commentary. Just raw JSON.
+Score lifts honestly across the FULL 0-100 range:
+- 0: Not a lift (food, animal, random photo)
+- 5-25: Severely dangerous form
+- 26-45: Bad form, multiple faults
+- 46-60: Below average
+- 61-72: Mediocre
+- 73-82: Solid
+- 83-91: Strong
+- 92-97: Elite
+- 98-100: Textbook perfection
 
-Score lifts honestly across the FULL 0-100 range. Bad form = 20-45. Mediocre = 50-65. Solid = 70-82. Strong = 83-91. Elite = 92+. NEVER default to 70.
+NEVER default to 70 or any single number. Different images get different scores.
 
-Use plain English: "knees caving in" not "knee valgus"; "back rounding" not "lumbar flexion". Be specific to the actual image.
+BE BRUTAL. No "great effort!" no empty validation. If form is bad, say so directly. Reference specific body parts and faults you actually see.
 
-If the image is NOT a person performing a lift (food, animal, random photo), set score to 0 and lift_confirmed to "Not a lift".
+USE PLAIN ENGLISH:
+- "knees caving in" not "knee valgus"
+- "back rounding" not "lumbar flexion"
+- "hips shooting up first" not "hip-shoot"
+- "shoulders rolling forward" not "scapular protraction"
 
-REQUIRED JSON SHAPE (output exactly this structure, no other format):
+If image is NOT a person performing a lift, score 0 with lift_confirmed "Not a lift".
+
+Respond with ONLY a valid JSON object, no markdown, no preamble. Use this exact structure:
 {
   "score": 75,
   "lift_confirmed": "Back Squat",
-  "verdict": "Three to four brutal sentences specific to the image, plain English.",
+  "verdict": "3-4 brutal sentences specific to this image. Plain English. Reference actual body parts you see.",
   "flags": [
-    {"name": "GOOD DEPTH", "severity": "good", "note": "One specific sentence about what you observe."},
-    {"name": "KNEES CAVING IN", "severity": "bad", "note": "One specific sentence."}
+    {"name": "GOOD DEPTH", "severity": "good", "note": "specific observation"},
+    {"name": "KNEES CAVING IN", "severity": "bad", "note": "specific observation"}
   ],
   "fixes": [
-    {"text": "Specific actionable cue with **bolded keyword**, one to two sentences."},
-    {"text": "Second cue."},
-    {"text": "Third cue."}
+    {"text": "actionable cue with **bolded keyword**, 1-2 sentences"},
+    {"text": "second cue"},
+    {"text": "third cue"}
   ]
 }
 
-Rules:
-- 4 to 6 flag objects total. Mix severities based on what you actually see.
-- Severity values: only "good", "warn", or "bad" (lowercase strings).
-- Exactly 3 fix objects.
-- Use ALL CAPS for flag names, max 5 words each.
-- Use **double asterisks** to bold keywords in fix text.
-- If not a lift: empty arrays for flags and fixes.
+4-6 flags total (mix of good/warn/bad based on what you see). Severity must be lowercase: "good", "warn", or "bad". EXACTLY 3 fixes. ALL CAPS for flag names, max 5 words. Use **double asterisks** for bold.
 
-OUTPUT ONLY THE JSON OBJECT. NOTHING ELSE.`;
+If not a lift: score 0, empty flags array, empty fixes array.`;
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -48,44 +57,30 @@ function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 }
 
-// Bulletproof JSON extraction from any text response
 function extractJSON(text) {
   if (!text) return null;
-
-  // Try 1: direct parse
   try { return JSON.parse(text); } catch {}
-
-  // Try 2: strip markdown code fences
   let cleaned = text.replace(/^[\s\S]*?```(?:json)?\s*/i, '').replace(/```[\s\S]*$/, '').trim();
   try { return JSON.parse(cleaned); } catch {}
-
-  // Try 3: find first { and last } and extract
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     const extracted = text.slice(firstBrace, lastBrace + 1);
     try { return JSON.parse(extracted); } catch {}
-
-    // Try 4: clean up common issues in the extraction
     const fixed = extracted
-      .replace(/,(\s*[}\]])/g, '$1')           // remove trailing commas
-      .replace(/[\u201C\u201D]/g, '"')          // smart quotes -> straight
-      .replace(/[\u2018\u2019]/g, "'")          // smart apostrophes
-      .replace(/\n/g, ' ')                      // newlines to spaces inside JSON
-      .replace(/\s+/g, ' ');                    // collapse whitespace
+      .replace(/,(\s*[}\]])/g, '$1')
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2018\u2019]/g, "'");
     try { return JSON.parse(fixed); } catch {}
   }
-
   return null;
 }
 
-// Validate and normalize the parsed response
 function normalizeResult(parsed, fallbackLift) {
   if (!parsed || typeof parsed !== 'object') return null;
-
-  const result = {
+  return {
     score: Math.max(0, Math.min(100, parseInt(parsed.score) || 0)),
-    lift_confirmed: String(parsed.lift_confirmed || fallbackLift || 'Unknown lift'),
+    lift_confirmed: String(parsed.lift_confirmed || fallbackLift || 'Unknown'),
     verdict: String(parsed.verdict || 'Analysis complete.'),
     flags: Array.isArray(parsed.flags) ? parsed.flags.slice(0, 6).map(f => ({
       name: String(f.name || 'OBSERVATION').toUpperCase().slice(0, 50),
@@ -96,8 +91,6 @@ function normalizeResult(parsed, fallbackLift) {
       text: String(f.text || ''),
     })) : [],
   };
-
-  return result;
 }
 
 export default async function handler(req) {
@@ -105,8 +98,8 @@ export default async function handler(req) {
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return jsonResponse({ error: 'GEMINI_API_KEY not configured' }, 500);
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return jsonResponse({ error: 'OPENAI_API_KEY not configured' }, 500);
 
     const body = await req.json();
     const { image, lift, notes } = body;
@@ -118,77 +111,60 @@ export default async function handler(req) {
     let mediaType = image.media_type;
     if (mediaType === 'image/jpg') mediaType = 'image/jpeg';
 
-    const userText = `LIFT TYPE: ${lift || 'unknown'}${notes ? '\nUSER NOTES: "' + notes + '"' : ''}\n\nAnalyze this image. Output ONLY the raw JSON object — no markdown, no code fences, no commentary.`;
+    const dataUrl = `data:${mediaType};base64,${image.data}`;
+    const userText = `LIFT TYPE: ${lift || 'unknown'}${notes ? '\nUSER NOTES: "' + notes + '"' : ''}\n\nAnalyze this image. Be brutal, specific, accurate. Use the full 0-100 range. Output only the JSON object.`;
 
-    const models = ['gemini-2.0-flash-exp', 'gemini-1.5-flash', 'gemini-1.5-flash-latest'];
-    let lastError = null;
-    let geminiData = null;
-
-    for (const model of models) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: [{
-              role: 'user',
-              parts: [
-                { text: userText },
-                { inline_data: { mime_type: mediaType, data: image.data } },
-              ],
-            }],
-            generationConfig: {
-              temperature: 0.85,
-              topP: 0.95,
-              maxOutputTokens: 2000,
-              responseMimeType: 'application/json',
-            },
-            safetySettings: [
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: userText },
+              { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
             ],
-          }),
-        });
+          },
+        ],
+        response_format: { type: 'json_object' },
+        max_tokens: 1500,
+        temperature: 0.85,
+      }),
+    });
 
-        if (response.ok) {
-          geminiData = await response.json();
-          break;
-        }
-        lastError = { model, status: response.status, text: (await response.text()).slice(0, 300) };
-      } catch (err) {
-        lastError = { model, error: String(err.message) };
-      }
+    if (!response.ok) {
+      const errText = await response.text();
+      return jsonResponse({
+        error: 'OpenAI API failed',
+        debug_status: response.status,
+        debug_response: errText.slice(0, 400),
+      }, 502);
     }
 
-    if (!geminiData) {
-      return jsonResponse({ error: 'Gemini API failed', debug: lastError }, 502);
-    }
-
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || '';
 
     if (!text) {
-      return jsonResponse({
-        error: 'Gemini returned empty',
-        debug_finish: geminiData.candidates?.[0]?.finishReason,
-      }, 502);
+      return jsonResponse({ error: 'OpenAI returned empty response' }, 502);
     }
 
     const parsed = extractJSON(text);
     if (!parsed) {
-      // Last resort: return a fallback response so user sees SOMETHING
       return jsonResponse({
         score: 50,
         lift_confirmed: lift || 'Unknown',
-        verdict: 'The AI returned an unusual response. Try again with a different photo or angle.',
-        flags: [{ name: 'ANALYSIS INCOMPLETE', severity: 'warn', note: 'The AI had trouble reading this specific image. A clearer side-angle photo usually works best.' }],
+        verdict: 'The AI returned an unusual response. Try again with a clearer photo.',
+        flags: [{ name: 'ANALYSIS INCOMPLETE', severity: 'warn', note: 'Try a clearer side-angle photo.' }],
         fixes: [
-          { text: 'Try a **side-angle photo** instead of front-on for squats and deadlifts.' },
-          { text: 'Make sure the **whole body** is visible in frame.' },
-          { text: 'Use **good lighting** so the AI can see joint positions clearly.' },
+          { text: 'Try a **side-angle photo** for squats and deadlifts.' },
+          { text: 'Make sure the **whole body** is in frame.' },
+          { text: 'Use **good lighting** so joint positions are visible.' },
         ],
       });
     }
