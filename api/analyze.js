@@ -1,87 +1,19 @@
-// /api/analyze.js — Vercel Edge Function
-// Powered by Google Gemini 2.5 Flash — free, fast, accurate vision
+// /api/analyze.js — DEBUG VERSION
+// Returns clear error messages to help diagnose what's breaking
 
 export const config = { runtime: 'edge' };
 
-const SYSTEM_PROMPT = `You are GYMcheck — the most brutal, accurate, and feared AI form coach in the world. You give lifters the truth they're paying for.
+const SYSTEM_PROMPT = `You are GYMcheck — a brutal, accurate AI form coach. Score lifts honestly across 0-100. Bad form = 20-45. Mediocre = 50-65. Good = 70-85. Elite = 90+. Never default to 70. Use plain English (say "knees caving in" not "knee valgus"). Be specific to what you see. If image is not a lift, score 0.
 
-==========================================
-NON-NEGOTIABLE RULES
-==========================================
-
-1. THINK BEFORE SCORING
-Examine the image carefully. Identify specifically:
-- Foot position: width, angle, weight distribution
-- Knee tracking: over toes, caving in, flaring out, hyperextending
-- Hip position: shooting up first, hinging, tucking
-- Spine: neutral, rounded, hyperextended, lateral lean
-- Bar: path, position over midfoot, drift forward/back
-- Shoulders: packed, shrugged, rotated forward
-- Head: neutral, craned up, looking down
-- Depth: full, partial, ass-to-grass
-- Bracing: visible engagement, breath held
-- Tempo/control if visible
-
-2. SCORE WITH FULL RANGE — NEVER DEFAULT
-Forbidden: defaulting to any single number. Use the FULL range:
-- 0: Image is not a lift (food, animal, random object, abstract)
-- 5-25: Severely dangerous form. Imminent injury risk.
-- 26-45: Bad form. Multiple significant faults.
-- 46-60: Below average. Notable issues.
-- 61-72: Mediocre. Mix of decent and concerning.
-- 73-82: Solid. Mostly correct.
-- 83-91: Strong. Clean execution.
-- 92-97: Elite. National-level lifter.
-- 98-100: Textbook perfection — almost nobody.
-
-Different images get different scores. If you find yourself defaulting, look harder at the image.
-
-3. BRUTAL HONESTY, NO SUGARCOATING
-You are a paid analysis tool. Sugarcoating costs people their backs.
-- "Your knees are caving inward — fix this before you blow a knee."
-- "Your back is rounding hard. One more rep like that and you herniate a disc."
-- "You're missing 4 inches of depth. You're cheating yourself out of the lift."
-Forbidden: "great effort!" "looking strong!" or empty validation.
-
-4. PLAIN ENGLISH ALWAYS
-- "knee valgus" → "knees caving inward"
-- "lumbar flexion" → "back rounding"
-- "hip-shoot" → "hips rising before chest"
-- "anterior pelvic tilt" → "lower back overarched"
-- "scapular protraction" → "shoulders rolling forward"
-- "valgus collapse" → "knees buckling in"
-- "butt wink" → "tailbone tucking under at the bottom"
-
-5. BE SPECIFIC
-WRONG: "Watch your knee tracking."
-RIGHT: "Your right knee is caving inward about 3 inches at the bottom — drive it out hard."
-
-6. NOT A LIFT? SCORE 0.
-Random photos, food, animals, cartoons = score 0, lift_confirmed "Not a lift", explain it isn't a lift.
-
-7. CAMERA ANGLE WARNING
-If the angle is bad, call it out and tell them to reshoot.
-
-==========================================
-OUTPUT FORMAT
-==========================================
-Respond with ONLY valid JSON, no markdown, no preamble:
-
+Output ONLY valid JSON:
 {
-  "score": <integer 0-100>,
-  "lift_confirmed": "<lift you actually see, or 'Not a lift'>",
-  "verdict": "<3-4 sentences. Brutal. Specific to THIS image. Reference actual body parts you see. Plain English. No fluff.>",
-  "flags": [
-    {"name": "<ALL CAPS, max 5 words>", "severity": "good|warn|bad", "note": "<one specific sentence>"}
-  ],
-  "fixes": [
-    {"text": "<Specific cue with **bolded keyword**. 1-2 sentences.>"}
-  ]
+  "score": <0-100 integer>,
+  "lift_confirmed": "<lift you see, or 'Not a lift'>",
+  "verdict": "<3-4 brutal honest sentences specific to image>",
+  "flags": [{"name":"<ALL CAPS, max 5 words>","severity":"good|warn|bad","note":"<one sentence>"}],
+  "fixes": [{"text":"<actionable cue with **bold keyword**>"}]
 }
-
-Include 4-6 flags (mix good/warn/bad based on what you see — don't artificially balance).
-Include EXACTLY 3 fixes. Each addresses a specific flag. Use **double asterisks** for keywords.
-If image is NOT a lift: score 0, "Not a lift", explain in verdict, empty flags + fixes arrays.`;
+4-6 flags. Exactly 3 fixes. If not a lift: score 0, empty flags+fixes.`;
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -90,10 +22,7 @@ const cors = {
 };
 
 function jsonResponse(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
-  });
+  return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 }
 
 export default async function handler(req) {
@@ -101,45 +30,50 @@ export default async function handler(req) {
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
   try {
+    // DEBUG: Check what env var exists
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return jsonResponse({ error: 'GEMINI_API_KEY not configured' }, 500);
+    if (!apiKey) {
+      const availableKeys = Object.keys(process.env).filter(k => k.includes('API') || k.includes('KEY') || k.includes('GEMINI'));
+      return jsonResponse({
+        error: 'GEMINI_API_KEY not found in environment',
+        debug_available_env_keys: availableKeys,
+        debug_hint: 'On Vercel, go to Settings > Environment Variables and add GEMINI_API_KEY'
+      }, 500);
+    }
+
+    if (!apiKey.startsWith('AIza')) {
+      return jsonResponse({
+        error: 'GEMINI_API_KEY format wrong',
+        debug_hint: 'Gemini keys start with "AIza". Yours starts with: ' + apiKey.slice(0, 4),
+        debug_key_length: apiKey.length
+      }, 500);
+    }
 
     const body = await req.json();
     const { image, lift, notes } = body;
 
-    if (!image?.data || !image?.media_type) return jsonResponse({ error: 'Missing image' }, 400);
+    if (!image?.data || !image?.media_type) {
+      return jsonResponse({ error: 'Missing image data', debug_received: { hasImage: !!image, hasData: !!image?.data, hasMediaType: !!image?.media_type } }, 400);
+    }
 
-    const userText = `LIFT CLAIMED: ${lift || 'unknown'}${notes ? '\nLIFTER NOTES: "' + notes + '"' : ''}
+    const userText = `LIFT: ${lift || 'unknown'}${notes ? '. NOTES: "' + notes + '"' : ''}\n\nAnalyze this ${lift || 'lift'} image. Output only the JSON.`;
 
-Analyze this image of a ${lift || 'lift'}. Be brutal. Be specific. Be accurate. Use the full 0-100 score range. Output only the JSON object.`;
-
-    // Gemini 2.5 Flash — free tier, fast, strong vision
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT }],
-          },
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { text: userText },
-                {
-                  inline_data: {
-                    mime_type: image.media_type,
-                    data: image.data,
-                  },
-                },
-              ],
-            },
-          ],
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{
+            role: 'user',
+            parts: [
+              { text: userText },
+              { inline_data: { mime_type: image.media_type, data: image.data } },
+            ],
+          }],
           generationConfig: {
             temperature: 0.9,
-            topP: 0.95,
             maxOutputTokens: 1500,
             responseMimeType: 'application/json',
           },
@@ -149,11 +83,22 @@ Analyze this image of a ${lift || 'lift'}. Be brutal. Be specific. Be accurate. 
 
     if (!geminiResponse.ok) {
       const errText = await geminiResponse.text();
-      return jsonResponse({ error: 'Analysis service error', detail: errText.slice(0, 300) }, 502);
+      return jsonResponse({
+        error: 'Gemini API rejected the request',
+        debug_status: geminiResponse.status,
+        debug_response: errText.slice(0, 500),
+      }, 502);
     }
 
     const data = await geminiResponse.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    if (!text) {
+      return jsonResponse({
+        error: 'Gemini returned empty response',
+        debug_full_response: JSON.stringify(data).slice(0, 500),
+      }, 502);
+    }
 
     let parsed;
     try {
@@ -161,11 +106,22 @@ Analyze this image of a ${lift || 'lift'}. Be brutal. Be specific. Be accurate. 
     } catch {
       const cleaned = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
       const match = cleaned.match(/\{[\s\S]*\}/);
-      parsed = JSON.parse(match ? match[0] : cleaned);
+      try {
+        parsed = JSON.parse(match ? match[0] : cleaned);
+      } catch (parseErr) {
+        return jsonResponse({
+          error: 'Failed to parse Gemini JSON response',
+          debug_raw_text: text.slice(0, 500),
+        }, 502);
+      }
     }
 
     return jsonResponse(parsed);
   } catch (err) {
-    return jsonResponse({ error: 'Server error', detail: String(err.message || err) }, 500);
+    return jsonResponse({
+      error: 'Server error',
+      debug_message: String(err.message || err),
+      debug_stack: String(err.stack || '').slice(0, 500),
+    }, 500);
   }
 }
