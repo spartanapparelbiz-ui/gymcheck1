@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D Form Preview v2 — Mixamo Human — GYMcheck.</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#0a0a0a;
+  font-family:'Inter','-apple-system',sans-serif;
+  color:#f3efe6;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:24px 16px;
+}
+.title{
+  font-family:'Anton','Arial Black',sans-serif;
+  font-size:28px;
+  letter-spacing:0.02em;
+  margin-bottom:6px;
+  text-align:center;
+}
+.title .check{
+  font-family:Georgia,serif;
+  font-style:italic;
+  color:#ff2d00;
+  font-weight:400;
+  text-transform:lowercase;
+}
+.subtitle{
+  font-size:11px;
+  letter-spacing:0.24em;
+  color:#ff2d00;
+  font-weight:700;
+  text-transform:uppercase;
+  margin-bottom:14px;
+}
+.badge{
+  font-size:10px;
+  letter-spacing:0.18em;
+  color:#d8ff00;
+  font-weight:700;
+  text-transform:uppercase;
+  margin-bottom:18px;
+  padding:4px 10px;
+  border:1px solid #d8ff00;
+  display:inline-block;
+}
+.viewer-wrap{
+  position:relative;
+  width:100%;
+  max-width:560px;
+  height:600px;
+  background:radial-gradient(ellipse at center, #1f1f1f 0%, #050505 75%);
+  border:2px solid #2a2a2a;
+  overflow:hidden;
+  margin-bottom:18px;
+}
+.viewer{position:absolute;inset:0}
+.viewer canvas{display:block;width:100%;height:100%}
+.brand-tag{
+  position:absolute;top:12px;right:14px;
+  font-family:'Anton','Arial Black',sans-serif;
+  font-size:9px;letter-spacing:0.28em;
+  color:rgba(255,45,0,0.75);
+  z-index:5;pointer-events:none;
+}
+.rec-dot{
+  position:absolute;top:10px;left:14px;
+  width:8px;height:8px;background:#ff2d00;border-radius:50%;
+  z-index:5;
+  animation:recBlink 1.4s ease-in-out infinite;
+}
+@keyframes recBlink{0%,100%{opacity:1}50%{opacity:0.35}}
+.phase-lbl{
+  position:absolute;top:50%;left:14px;
+  font-family:'Anton','Arial Black',sans-serif;
+  font-size:14px;letter-spacing:0.18em;
+  color:#ff2d00;
+  z-index:5;pointer-events:none;
+  writing-mode:vertical-rl;
+  transform:translateY(-50%) rotate(180deg);
+}
+.phase-dots{
+  position:absolute;bottom:82px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:8px;
+  z-index:5;
+}
+.phase-dot{
+  width:32px;height:5px;
+  background:rgba(255,255,255,0.15);
+  border:none;cursor:pointer;
+  transition:all .28s cubic-bezier(.2,.9,.3,1);
+  padding:0;
+}
+.phase-dot:hover{background:rgba(255,45,0,0.4)}
+.phase-dot.active{background:#ff2d00;width:48px;box-shadow:0 0 12px rgba(255,45,0,0.6)}
+.controls{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:18px 22px;
+  background:linear-gradient(to top,rgba(0,0,0,0.85),rgba(0,0,0,0.5));
+  display:flex;align-items:center;gap:14px;
+  z-index:5;
+}
+.play-btn{
+  width:42px;height:42px;
+  background:#ff2d00;color:#fff;
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  font-size:14px;
+  flex-shrink:0;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 4px 16px rgba(255,45,0,0.4);
+}
+.play-btn:hover{transform:scale(1.05);box-shadow:0 4px 24px rgba(255,45,0,0.6)}
+.play-btn:active{transform:scale(0.95)}
+.scrubber-wrap{flex:1;display:flex;flex-direction:column;gap:5px}
+.scrubber{
+  position:relative;
+  height:6px;
+  background:rgba(255,255,255,0.1);
+  cursor:pointer;
+  border-radius:3px;
+}
+.scrubber-fill{
+  position:absolute;top:0;left:0;
+  height:100%;background:#ff2d00;
+  border-radius:3px;
+  pointer-events:none;
+  box-shadow:0 0 8px rgba(255,45,0,0.5);
+}
+.scrubber-handle{
+  position:absolute;top:50%;
+  width:14px;height:14px;
+  background:#fff;border-radius:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 0 3px #ff2d00, 0 2px 8px rgba(0,0,0,0.5);
+  pointer-events:none;
+}
+.time-lbl{
+  font-family:'JetBrains Mono',Menlo,monospace;
+  font-size:10px;color:#aaa;
+  display:flex;justify-content:space-between;
+  letter-spacing:0.04em;
+}
+.lift-tabs{
+  display:flex;gap:6px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+  justify-content:center;
+  max-width:560px;
+}
+.lift-tab{
+  padding:9px 16px;
+  background:transparent;
+  border:1.5px solid #333;
+  color:#888;
+  font-family:'Anton','Arial Black',sans-serif;
+  font-size:11px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s;
+}
+.lift-tab:hover{color:#fff;border-color:#666}
+.lift-tab.active{
+  background:#ff2d00;
+  border-color:#ff2d00;
+  color:#fff;
+}
+.footer{
+  margin-top:24px;font-size:11px;color:#555;
+  letter-spacing:0.18em;text-transform:uppercase;
+  text-align:center;
+}
+
+/* Loading overlay */
+.loading{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:14px;
+  background:#0a0a0a;
+  z-index:10;
+}
+.loading.done{display:none}
+.spinner{
+  width:48px;height:48px;
+  border:3px solid #2a2a2a;
+  border-top-color:#ff2d00;
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{
+  font-family:'Anton','Arial Black',sans-serif;
+  font-size:11px;letter-spacing:0.24em;color:#ff2d00;
+}
+.error{color:#ff5544;font-size:13px;text-align:center;padding:20px;font-family:monospace;line-height:1.5}
+</style>
+</head>
+<body>
+<h1 class="title">GYM<span class="check">check</span><span style="color:#ff2d00">▪</span></h1>
+<div class="subtitle">3D MOTION PREVIEW</div>
+<div class="badge">★ REAL HUMAN MODEL · MIXAMO Y BOT</div>
+
+<div class="lift-tabs" id="liftTabs">
+  <button class="lift-tab active" data-lift="squat">SQUAT</button>
+  <button class="lift-tab" data-lift="bench">BENCH</button>
+  <button class="lift-tab" data-lift="deadlift">DEADLIFT</button>
+  <button class="lift-tab" data-lift="ohp">OHP</button>
+</div>
+
+<div class="viewer-wrap">
+  <span class="rec-dot"></span>
+  <span class="brand-tag">GYMcheck™ MOTION 3D</span>
+  <div class="phase-lbl" id="phaseLbl">SETUP</div>
+  <div class="viewer" id="viewer"></div>
+  <div class="phase-dots" id="phaseDots"></div>
+  <div class="controls">
+    <button class="play-btn" id="playBtn" aria-label="Play">▶</button>
+    <div class="scrubber-wrap">
+      <div class="scrubber" id="scrubber">
+        <div class="scrubber-fill" id="scrubberFill"></div>
+        <div class="scrubber-handle" id="scrubberHandle"></div>
+      </div>
+      <div class="time-lbl">
+        <span id="timeLbl">0.00s</span>
+        <span id="durLbl">4.00s</span>
+      </div>
+    </div>
+  </div>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">LOADING 3D MODEL...</div>
+  </div>
+</div>
+
+<div class="footer">PROTOTYPE v2 · Mixamo Y Bot rig · Form-accurate bone animations</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const viewer = document.getElementById('viewer');
+const loadingEl = document.getElementById('loading');
+let W = viewer.clientWidth, H = viewer.clientHeight;
+
+// === SCENE ===
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, W/H, 0.1, 100);
+camera.position.set(0, 1.2, 4.5);
+camera.lookAt(0, 1.0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+viewer.appendChild(renderer.domElement);
+
+// === LIGHTING ===
+const keyLight = new THREE.DirectionalLight(0xfff0e0, 1.6);
+keyLight.position.set(3, 5, 2.5);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 2048;
+keyLight.shadow.mapSize.height = 2048;
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far = 14;
+keyLight.shadow.camera.left = -3;
+keyLight.shadow.camera.right = 3;
+keyLight.shadow.camera.top = 3;
+keyLight.shadow.camera.bottom = -1;
+keyLight.shadow.bias = -0.0005;
+scene.add(keyLight);
+
+const rimLight = new THREE.DirectionalLight(0xff2d00, 0.55);
+rimLight.position.set(-3, 2, -2);
+scene.add(rimLight);
+
+const fillLight = new THREE.DirectionalLight(0x88aaff, 0.35);
+fillLight.position.set(-2, 1.5, 3);
+scene.add(fillLight);
+
+scene.add(new THREE.AmbientLight(0x404048, 0.4));
+
+// === FLOOR ===
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(10, 10),
+  new THREE.MeshStandardMaterial({ color: 0x121212, roughness: 0.88, metalness: 0.1 })
+);
+floor.rotation.x = -Math.PI/2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+const grid = new THREE.GridHelper(10, 20, 0x2a2a2a, 0x1a1a1a);
+grid.position.y = 0.002;
+scene.add(grid);
+
+// === EQUIPMENT MATERIALS ===
+const barMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.35, metalness: 0.85 });
+const plateMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.5, metalness: 0.2 });
+const plateRing = new THREE.MeshStandardMaterial({ color: 0xff2d00, roughness: 0.5 });
+const benchMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6, metalness: 0.3 });
+const benchPadMat = new THREE.MeshStandardMaterial({ color: 0x252525, roughness: 0.85 });
+
+// === BARBELL ===
+const barbell = new THREE.Group();
+scene.add(barbell);
+
+const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 2.2, 16), barMat);
+bar.rotation.z = Math.PI/2;
+bar.castShadow = true;
+barbell.add(bar);
+
+function makePlateStack(xPos){
+  const grp = new THREE.Group();
+  grp.position.x = xPos;
+  const sign = Math.sign(xPos);
+  const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.045, 28), plateMat);
+  p1.rotation.z = Math.PI/2; p1.position.x = 0.04 * sign; p1.castShadow = true; grp.add(p1);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.205, 0.205, 0.006, 28), plateRing);
+  ring.rotation.z = Math.PI/2; ring.position.x = 0.04 * sign; grp.add(ring);
+  const p2 = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.045, 28), plateMat);
+  p2.rotation.z = Math.PI/2; p2.position.x = -0.01 * sign; p2.castShadow = true; grp.add(p2);
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.04, 14), barMat);
+  collar.rotation.z = Math.PI/2; collar.position.x = 0.085 * sign; collar.castShadow = true; grp.add(collar);
+  return grp;
+}
+barbell.add(makePlateStack(-0.95));
+barbell.add(makePlateStack(0.95));
+
+// === BENCH ===
+const bench = new THREE.Group();
+scene.add(bench);
+bench.visible = false;
+
+const benchPad = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.35), benchPadMat);
+benchPad.position.y = 0.40;
+benchPad.castShadow = true;
+benchPad.receiveShadow = true;
+bench.add(benchPad);
+const benchLeg = (x) => {
+  const l = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.36, 0.30), benchMat);
+  l.position.set(x, 0.18, 0); l.castShadow = true; return l;
+};
+bench.add(benchLeg(-0.55));
+bench.add(benchLeg(0.55));
+const benchUp = (x) => {
+  const u = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.55, 0.06), benchMat);
+  u.position.set(x, 0.68, -0.2); u.castShadow = true; return u;
+};
+bench.add(benchUp(-0.6));
+bench.add(benchUp(0.6));
+
+// === SQUAT RACK ===
+const rack = new THREE.Group();
+scene.add(rack);
+rack.visible = false;
+
+const rackPost = (x) => {
+  const p = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.7, 0.08), benchMat);
+  p.position.set(x, 0.85, -0.7); p.castShadow = true; return p;
+};
+rack.add(rackPost(-0.55));
+rack.add(rackPost(0.55));
+const cup = (x) => {
+  const c = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.14), plateRing);
+  c.position.set(x, 1.55, -0.65); c.castShadow = true; return c;
+};
+rack.add(cup(-0.55));
+rack.add(cup(0.55));
+
+// === LOAD MIXAMO MODEL ===
+let figure = null;
+let bones = {};  // name -> bone object
+const loader = new GLTFLoader();
+
+// Try multiple possible paths for the model file
+const modelUrls = [
+  './ybot.glb',
+  '/ybot.glb',
+  'ybot.glb',
+];
+
+function tryLoadModel(urls, idx = 0){
+  if (idx >= urls.length) {
+    loadingEl.innerHTML = `<div class="error">
+      Could not load ybot.glb<br/><br/>
+      The model file must be hosted on the same server as this HTML.<br/>
+      Upload both files to your Vercel project and try again.<br/><br/>
+      <span style="font-size:11px;color:#888">Note: Won't work in Claude's preview sandbox.<br/>Test on your deployed site.</span>
+    </div>`;
+    return;
+  }
+  
+  loader.load(urls[idx], onModelLoaded, undefined, (err) => {
+    console.warn('Failed:', urls[idx], err.message);
+    tryLoadModel(urls, idx + 1);
+  });
+}
+
+function onModelLoaded(gltf){
+  figure = gltf.scene;
+  
+  // Mixamo models export at ~1:100 scale, need to scale to 1m=1unit
+  // Y Bot exports at "100" scale by default - tested empirically
+  figure.scale.set(0.01, 0.01, 0.01);
+  figure.position.set(0, 0, 0);
+  
+  figure.traverse(obj => {
+    if (obj.isMesh) {
+      obj.castShadow = true;
+      obj.receiveShadow = true;
+      // Y Bot has its own materials — ensure they look good with our lighting
+      if (obj.material) {
+        obj.material.roughness = 0.55;
+        obj.material.metalness = 0.05;
+      }
+    }
+    if (obj.isBone) {
+      // Strip "mixamorig:" prefix for easier reference
+      const cleanName = obj.name.replace('mixamorig:', '');
+      bones[cleanName] = obj;
+    }
+  });
+  
+  scene.add(figure);
+  console.log('Model loaded. Bones available:', Object.keys(bones).length);
+  console.log('Key bones:', Object.keys(bones).filter(n => 
+    ['Hips','Spine','Spine1','Spine2','Neck','Head',
+     'LeftShoulder','LeftArm','LeftForeArm','LeftHand',
+     'RightShoulder','RightArm','RightForeArm','RightHand',
+     'LeftUpLeg','LeftLeg','LeftFoot',
+     'RightUpLeg','RightLeg','RightFoot'].includes(n)
+  ));
+  
+  loadingEl.classList.add('done');
+  
+  // Save initial T-pose rotations so we can return to them
+  saveRestPose();
+  
+  renderFrame();
+}
+
+// Start trying the URLs
+tryLoadModel(modelUrls);
+
+// Store rest pose
+const restPose = {};
+function saveRestPose(){
+  for (const [name, bone] of Object.entries(bones)) {
+    restPose[name] = {
+      rotation: bone.rotation.clone(),
+      position: bone.position.clone()
+    };
+  }
+}
+function restoreRestPose(){
+  for (const [name, bone] of Object.entries(bones)) {
+    if (restPose[name]) {
+      bone.rotation.copy(restPose[name].rotation);
+      bone.position.copy(restPose[name].position);
+    }
+  }
+}
+
+// Helper: rotate a bone relative to its rest pose
+function setBoneRot(name, rx=0, ry=0, rz=0){
+  const bone = bones[name];
+  if (!bone) return;
+  const rest = restPose[name];
+  if (!rest) return;
+  bone.rotation.x = rest.rotation.x + rx;
+  bone.rotation.y = rest.rotation.y + ry;
+  bone.rotation.z = rest.rotation.z + rz;
+}
+
+// Helper: set hip position offset (relative to rest)
+function setHipsOffset(x=0, y=0, z=0){
+  const bone = bones.Hips;
+  if (!bone) return;
+  const rest = restPose.Hips;
+  bone.position.x = rest.position.x + x;
+  bone.position.y = rest.position.y + y;
+  bone.position.z = rest.position.z + z;
+}
+
+// === ANIMATION FUNCTIONS ===
+function lerp(a,b,t){ return a + (b-a)*t; }
+function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
+function tri(t){ return t < 0.5 ? t*2 : (1-t)*2; }
+
+const LIFTS = {
+  squat: {
+    duration: 4.0,
+    phases: [
+      { t: 0.0, name: 'SETUP' },
+      { t: 0.20, name: 'DESCEND' },
+      { t: 0.45, name: 'BOTTOM' },
+      { t: 0.55, name: 'DRIVE UP' },
+      { t: 0.85, name: 'LOCKOUT' }
+    ],
+    setup(){ rack.visible = true; bench.visible = false; },
+    apply(t){
+      const depth = easeInOutCubic(tri(t));
+      
+      // HIP DROPS (vertical)
+      // Mixamo Y Bot at 0.01 scale is ~1.6m tall. Hip rest position ~Y=100 (units), which becomes Y=1.0 after scale.
+      // We drop hips down for squat. Lowering by ~0.4m at bottom.
+      setHipsOffset(0, -depth * 40, -depth * 4); // values in pre-scale units
+      
+      // SPINE — slight forward lean (rotate around X)
+      setBoneRot('Spine', -depth * 0.20, 0, 0);
+      setBoneRot('Spine1', -depth * 0.15, 0, 0);
+      
+      // THIGHS (LeftUpLeg/RightUpLeg) rotate forward
+      // In Mixamo, leg bones extend DOWN from hip, so rotating around X tilts thigh forward
+      setBoneRot('LeftUpLeg', -depth * 1.30, 0, 0);
+      setBoneRot('RightUpLeg', -depth * 1.30, 0, 0);
+      
+      // KNEES (LeftLeg/RightLeg) bend — shin pushes back relative to thigh
+      setBoneRot('LeftLeg', depth * 1.55, 0, 0);
+      setBoneRot('RightLeg', depth * 1.55, 0, 0);
+      
+      // ANKLES compensate to keep feet flat
+      setBoneRot('LeftFoot', -depth * 0.30, 0, 0);
+      setBoneRot('RightFoot', -depth * 0.30, 0, 0);
+      
+      // ARMS — grip the bar high on traps. Shoulders abducted ~90°, elbows bent.
+      // Arms back, elbows tucked. Z rotation pulls arm away from body.
+      setBoneRot('LeftArm', -Math.PI*0.4, 0, Math.PI*0.45);
+      setBoneRot('RightArm', -Math.PI*0.4, 0, -Math.PI*0.45);
+      setBoneRot('LeftForeArm', 0, 0, Math.PI*0.55);
+      setBoneRot('RightForeArm', 0, 0, -Math.PI*0.55);
+      
+      // BARBELL on traps — follows the shoulders
+      const shoulderHeight = 1.42 - depth * 0.40;
+      barbell.position.set(0, shoulderHeight, -0.05 - depth * 0.04);
+    }
+  },
+  
+  bench: {
+    duration: 3.5,
+    phases: [
+      { t: 0.0, name: 'TOP' },
+      { t: 0.25, name: 'DESCEND' },
+      { t: 0.50, name: 'CHEST' },
+      { t: 0.60, name: 'DRIVE' },
+      { t: 0.95, name: 'LOCKOUT' }
+    ],
+    setup(){
+      rack.visible = false;
+      bench.visible = true;
+    },
+    apply(t){
+      const descent = easeInOutCubic(tri(t));
+      
+      // Lay the figure on the bench by rotating Hips around X
+      // Move whole figure up and tilt -90°
+      if (figure) {
+        figure.rotation.x = -Math.PI/2;
+        figure.position.set(0, 0.48, 0); // body on bench top
+      }
+      
+      // Reset hip offset (since we're rotating whole figure)
+      setHipsOffset(0, 0, 0);
+      
+      // Legs bent ~90° (feet planted on floor each side)
+      setBoneRot('LeftUpLeg', 0, 0.3, 0);
+      setBoneRot('RightUpLeg', 0, -0.3, 0);
+      setBoneRot('LeftLeg', 0.4, 0, 0);
+      setBoneRot('RightLeg', 0.4, 0, 0);
+      
+      // ARMS — extended up at top, bend at chest
+      // At top: arms perpendicular to torso (so out from chest in original space)
+      // Z-rotation puts arms out to sides
+      const armBend = lerp(0, 1.2, descent);
+      setBoneRot('LeftArm', -Math.PI*0.5, 0, Math.PI*0.45);
+      setBoneRot('RightArm', -Math.PI*0.5, 0, -Math.PI*0.45);
+      setBoneRot('LeftForeArm', 0, 0, armBend);
+      setBoneRot('RightForeArm', 0, 0, -armBend);
+      
+      // BAR — moves above the chest
+      // Bench top is at Y=0.48, chest is +0.15 above bench, arm length ~0.5m
+      const barTopY = 1.45;
+      const barBottomY = 1.05;
+      barbell.position.set(0, lerp(barTopY, barBottomY, descent), 0);
+    }
+  },
+  
+  deadlift: {
+    duration: 4.0,
+    phases: [
+      { t: 0.0, name: 'SETUP' },
+      { t: 0.15, name: 'BREAK FLOOR' },
+      { t: 0.40, name: 'PAST KNEES' },
+      { t: 0.50, name: 'LOCKOUT' },
+      { t: 0.85, name: 'LOWER' }
+    ],
+    setup(){
+      rack.visible = false; bench.visible = false;
+      if (figure) figure.rotation.set(0, 0, 0);
+    },
+    apply(t){
+      const up = easeInOutCubic(tri(t));
+      
+      // Reset figure rotation
+      if (figure) figure.position.set(0, 0, 0);
+      
+      // Setup: hip low + back, torso forward
+      // Lockout: hip up, torso vertical
+      // Hip drops ~0.35m at setup
+      const dropAmount = (1 - up) * 35; // pre-scale units
+      setHipsOffset(0, -dropAmount, -(1-up) * 5);
+      
+      // Spine — bent forward at setup (~50°), vertical at lockout
+      const torsoTilt = (1 - up) * 0.70;
+      setBoneRot('Spine', -torsoTilt * 0.4, 0, 0);
+      setBoneRot('Spine1', -torsoTilt * 0.4, 0, 0);
+      setBoneRot('Spine2', -torsoTilt * 0.2, 0, 0);
+      
+      // Thighs — angled forward at setup, vertical at lockout
+      const thighRot = (1 - up) * 0.90;
+      setBoneRot('LeftUpLeg', -thighRot, 0, 0);
+      setBoneRot('RightUpLeg', -thighRot, 0, 0);
+      
+      // Knees — bent at setup, straight at lockout
+      const kneeBend = (1 - up) * 1.10;
+      setBoneRot('LeftLeg', kneeBend, 0, 0);
+      setBoneRot('RightLeg', kneeBend, 0, 0);
+      
+      // Ankles
+      setBoneRot('LeftFoot', -(1-up) * 0.25, 0, 0);
+      setBoneRot('RightFoot', -(1-up) * 0.25, 0, 0);
+      
+      // ARMS — hang straight down from shoulders gripping bar
+      // The arms need to be perpendicular to the torso (which is tilted forward)
+      // So shoulder rotation X = torsoTilt (compensates for torso lean)
+      setBoneRot('LeftArm', torsoTilt, 0, Math.PI*0.15);
+      setBoneRot('RightArm', torsoTilt, 0, -Math.PI*0.15);
+      setBoneRot('LeftForeArm', 0, 0, 0);
+      setBoneRot('RightForeArm', 0, 0, 0);
+      
+      // BARBELL — follows hands. Starts at floor (Y=0.20), ends at hip (Y=0.95).
+      // Stays slightly in front of body
+      barbell.position.set(0, lerp(0.20, 0.95, up), 0.04);
+    }
+  },
+  
+  ohp: {
+    duration: 3.5,
+    phases: [
+      { t: 0.0, name: 'FRONT RACK' },
+      { t: 0.25, name: 'DRIVE' },
+      { t: 0.50, name: 'LOCKOUT' },
+      { t: 0.85, name: 'LOWER' }
+    ],
+    setup(){
+      rack.visible = false; bench.visible = false;
+      if (figure) figure.rotation.set(0, 0, 0);
+    },
+    apply(t){
+      const up = easeInOutCubic(tri(t));
+      
+      // Standing, slight back lean at lockout for stability
+      if (figure) figure.position.set(0, 0, 0);
+      setHipsOffset(0, 0, 0);
+      setBoneRot('Spine', up * 0.08, 0, 0);
+      
+      // Legs slightly apart
+      setBoneRot('LeftUpLeg', 0, 0.05, 0);
+      setBoneRot('RightUpLeg', 0, -0.05, 0);
+      setBoneRot('LeftLeg', 0, 0, 0);
+      setBoneRot('RightLeg', 0, 0, 0);
+      
+      // ARMS: front rack (elbows up + bent) → overhead extended
+      // At rack: shoulder rotated so elbow is up & forward, forearm vertical with hand at shoulder
+      // At top: arm straight up
+      const armUp = lerp(-Math.PI*0.5, -Math.PI*0.95, up); // shoulder X rotation
+      const elbowBend = lerp(1.85, 0.1, up); // elbow Z rotation
+      
+      setBoneRot('LeftArm', armUp, 0, Math.PI*0.15);
+      setBoneRot('RightArm', armUp, 0, -Math.PI*0.15);
+      setBoneRot('LeftForeArm', 0, 0, elbowBend);
+      setBoneRot('RightForeArm', 0, 0, -elbowBend);
+      
+      // BARBELL — follows hands. Starts at upper chest (Y=1.4), ends overhead (Y=2.1).
+      barbell.position.set(0, lerp(1.40, 2.10, up), lerp(0.10, 0, up));
+    }
+  }
+};
+
+// === STATE ===
+let currentLiftKey = 'squat';
+let currentLift = LIFTS.squat;
+let time = 0;
+let playing = false;
+let lastTime = performance.now();
+
+// === PHASE UI ===
+const dotsEl = document.getElementById('phaseDots');
+function rebuildPhaseDots(){
+  dotsEl.innerHTML = '';
+  currentLift.phases.forEach((p) => {
+    const d = document.createElement('button');
+    d.className = 'phase-dot';
+    d.addEventListener('click', () => {
+      time = p.t * currentLift.duration;
+      playing = false;
+      updatePlayBtn();
+      renderFrame();
+    });
+    dotsEl.appendChild(d);
+  });
+}
+
+function updatePhaseUI(t){
+  let phase = currentLift.phases[0];
+  for (const p of currentLift.phases) {
+    if (t >= p.t) phase = p;
+  }
+  document.getElementById('phaseLbl').textContent = phase.name;
+  dotsEl.querySelectorAll('.phase-dot').forEach((d, i) => {
+    const next = currentLift.phases[i+1];
+    const isActive = t >= currentLift.phases[i].t && (next ? t < next.t : true);
+    d.classList.toggle('active', isActive);
+  });
+}
+
+// === SCRUBBER ===
+const scrubber = document.getElementById('scrubber');
+const scrubberFill = document.getElementById('scrubberFill');
+const scrubberHandle = document.getElementById('scrubberHandle');
+const playBtn = document.getElementById('playBtn');
+
+let dragging = false;
+function setScrubFromX(clientX){
+  const rect = scrubber.getBoundingClientRect();
+  const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  time = x * currentLift.duration;
+}
+
+scrubber.addEventListener('mousedown', e => {
+  dragging = true; playing = false; updatePlayBtn();
+  setScrubFromX(e.clientX); renderFrame();
+});
+window.addEventListener('mousemove', e => {
+  if (dragging){ setScrubFromX(e.clientX); renderFrame(); }
+});
+window.addEventListener('mouseup', () => { dragging = false; });
+
+scrubber.addEventListener('touchstart', e => {
+  dragging = true; playing = false; updatePlayBtn();
+  setScrubFromX(e.touches[0].clientX); renderFrame();
+  e.preventDefault();
+}, { passive: false });
+window.addEventListener('touchmove', e => {
+  if (dragging){ setScrubFromX(e.touches[0].clientX); renderFrame(); e.preventDefault(); }
+}, { passive: false });
+window.addEventListener('touchend', () => { dragging = false; });
+
+playBtn.addEventListener('click', () => {
+  playing = !playing;
+  if (playing && time >= currentLift.duration - 0.05) time = 0;
+  updatePlayBtn();
+});
+
+function updatePlayBtn(){
+  playBtn.innerHTML = playing ? '❚❚' : '▶';
+  playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+}
+
+// === LIFT TABS ===
+document.getElementById('liftTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.lift-tab');
+  if (!tab) return;
+  document.querySelectorAll('.lift-tab').forEach(t => t.classList.toggle('active', t === tab));
+  switchLift(tab.dataset.lift);
+});
+
+function switchLift(key){
+  currentLiftKey = key;
+  currentLift = LIFTS[key];
+  time = 0;
+  playing = false;
+  updatePlayBtn();
+  rebuildPhaseDots();
+  document.getElementById('durLbl').textContent = currentLift.duration.toFixed(2) + 's';
+  // Reset everything before applying new lift setup
+  if (figure) {
+    figure.rotation.set(0, 0, 0);
+    figure.position.set(0, 0, 0);
+  }
+  restoreRestPose();
+  currentLift.setup();
+  renderFrame();
+}
+
+// === RENDER LOOP ===
+function renderFrame(){
+  if (!figure) {
+    renderer.render(scene, camera);
+    return;
+  }
+  
+  const t = (time / currentLift.duration) % 1;
+  
+  // Reset to T-pose then apply
+  restoreRestPose();
+  currentLift.apply(t);
+
+  const pct = (time / currentLift.duration) * 100;
+  scrubberFill.style.width = pct + '%';
+  scrubberHandle.style.left = pct + '%';
+  document.getElementById('timeLbl').textContent = time.toFixed(2) + 's';
+  updatePhaseUI(t);
+
+  renderer.render(scene, camera);
+}
+
+function animate(now){
+  if (playing && figure) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    time += dt;
+    if (time >= currentLift.duration) time = 0;
+    renderFrame();
+  }
+  lastTime = now;
+  requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => {
+  W = viewer.clientWidth; H = viewer.clientHeight;
+  camera.aspect = W/H;
+  camera.updateProjectionMatrix();
+  renderer.setSize(W, H);
+  renderFrame();
+});
+
+rebuildPhaseDots();
+document.getElementById('durLbl').textContent = currentLift.duration.toFixed(2) + 's';
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
