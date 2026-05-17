@@ -13,7 +13,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <style>
 :root{
@@ -171,6 +171,368 @@ body::before{
 }
 
 /* ======================= NAV ======================= */
+/* (CSS for dashboard hero added below in dedicated block) */
+/* ======================= DASHBOARD HERO (logged-in only) ======================= */
+.dash-hero{
+  padding:36px 24px 56px;
+  max-width:1280px;
+  margin:0 auto;
+  position:relative;
+}
+.dash-hero::before{
+  content:"01 / DASHBOARD";
+  position:absolute;
+  top:6px;left:24px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:500;
+  color:var(--ink-soft);
+  letter-spacing:0.16em;
+  opacity:0.5;
+}
+.dash-hero::after{
+  content:"// SESSION ACTIVE / v6";
+  position:absolute;
+  top:6px;right:24px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:500;
+  color:var(--accent);
+  letter-spacing:0.12em;
+  opacity:0.55;
+}
+
+.dash-grid{
+  display:grid;
+  grid-template-columns:1.6fr 1fr;
+  gap:48px;
+  align-items:start;
+  margin-top:28px;
+}
+
+.dash-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:6px 14px;
+  background:var(--ink);
+  color:var(--bg);
+  font-family:'Anton',sans-serif;
+  font-size:11px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  margin-bottom:18px;
+}
+.dash-eyebrow-dot{
+  width:7px;height:7px;
+  background:#10b981;
+  border-radius:50%;
+  display:inline-block;
+  animation:dashDotPulse 2s ease-in-out infinite;
+}
+@keyframes dashDotPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.6)}
+  50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}
+}
+.dash-eyebrow-code{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.12em;color:#10b981}
+.dash-eyebrow-divider{width:1px;height:12px;background:rgba(255,255,255,0.25);display:inline-block}
+.dash-eyebrow-time{font-size:10px;letter-spacing:0.18em;color:rgba(255,255,255,0.7)}
+
+.dash-headline{
+  font-family:'Anton',sans-serif;
+  font-size:clamp(48px,7vw,96px);
+  line-height:0.92;
+  letter-spacing:-0.01em;
+  text-transform:uppercase;
+  color:var(--ink);
+}
+.dash-name{
+  color:var(--accent);
+  display:inline-block;
+  position:relative;
+}
+.dash-period{
+  color:var(--accent);
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+}
+.dash-prompt{
+  margin-top:18px;
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+  font-size:22px;
+  color:var(--ink-soft);
+  letter-spacing:0;
+}
+
+.dash-cta-row{
+  margin-top:28px;
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:38px;
+}
+
+/* Dashboard stats strip */
+.dash-stats{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:10px;
+  margin-top:8px;
+}
+.dash-stat{
+  padding:18px 16px;
+  background:var(--paper);
+  border:2px solid var(--ink);
+  border-left:4px solid var(--accent);
+  text-align:left;
+  position:relative;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+}
+.dash-stat:hover{
+  transform:translateY(-3px);
+  box-shadow:0 4px 0 var(--accent);
+}
+.dash-stat-num{
+  font-family:'Anton',sans-serif;
+  font-size:38px;
+  line-height:1;
+  color:var(--ink);
+  letter-spacing:-0.02em;
+}
+.dash-stat-lbl{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:0.14em;
+  color:var(--muted);
+  text-transform:uppercase;
+  margin-top:6px;
+}
+
+/* Right side card */
+.dash-side{display:flex;flex-direction:column;gap:14px}
+.dash-side-card{
+  padding:24px;
+  background:var(--ink);
+  color:var(--bg);
+  border:3px solid var(--ink);
+  position:relative;
+  overflow:hidden;
+  box-shadow:8px 8px 0 var(--accent), 8px 8px 0 2px var(--ink);
+  transform:rotate(0.4deg);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+}
+.dash-side-card:hover{
+  transform:rotate(0deg) translate(-2px,-2px);
+  box-shadow:11px 11px 0 var(--accent), 11px 11px 0 2px var(--ink);
+}
+.dash-side-card::before{
+  content:"";
+  position:absolute;
+  top:-50%;right:-30%;
+  width:60%;height:200%;
+  background:radial-gradient(ellipse, rgba(255,45,0,0.18), transparent 60%);
+  pointer-events:none;
+}
+.dsc-eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;
+  letter-spacing:0.2em;
+  color:var(--accent);
+  text-transform:uppercase;
+}
+.dsc-lift{
+  font-family:'Anton',sans-serif;
+  font-size:26px;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+  color:var(--bg);
+  margin-top:8px;
+  line-height:1.05;
+}
+.dsc-score-row{
+  display:flex;
+  align-items:flex-end;
+  gap:14px;
+  margin-top:14px;
+}
+.dsc-score{
+  font-family:'Anton',sans-serif;
+  font-size:64px;
+  line-height:0.9;
+  color:var(--accent);
+  letter-spacing:-0.03em;
+  text-shadow:0 0 20px rgba(255,45,0,0.4);
+}
+.dsc-meta{display:flex;flex-direction:column;gap:3px;padding-bottom:6px}
+.dsc-grade{
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+  font-size:14px;
+  color:#aaa;
+}
+.dsc-date{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:#888;
+  letter-spacing:0.1em;
+}
+
+.dash-side-card-weak{
+  background:linear-gradient(135deg, #1a1a1a, #0d0d0d);
+  border-left:6px solid #ff6f00;
+  box-shadow:8px 8px 0 #ff6f00, 8px 8px 0 2px var(--ink);
+  transform:rotate(-0.4deg);
+}
+.dash-side-card-weak:hover{
+  box-shadow:11px 11px 0 #ff6f00, 11px 11px 0 2px var(--ink);
+}
+.dash-side-card-weak::before{
+  background:radial-gradient(ellipse, rgba(255,111,0,0.18), transparent 60%);
+}
+.dsc-weak-row{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  margin-top:12px;
+}
+.dsc-weak-avg{
+  font-family:'Anton',sans-serif;
+  font-size:48px;
+  line-height:1;
+  color:#ff6f00;
+  letter-spacing:-0.02em;
+}
+.dsc-weak-meta{
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  color:#888;
+}
+.dsc-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:600;
+  letter-spacing:0.12em;
+  color:var(--accent);
+  text-decoration:none;
+  border-bottom:1px solid var(--accent);
+  padding-bottom:2px;
+  transition:color .2s, border-color .2s;
+}
+.dsc-link:hover{color:#fff;border-color:#fff}
+
+.dash-side-card-empty{
+  background:var(--paper);
+  color:var(--ink);
+  border-color:var(--ink);
+  box-shadow:8px 8px 0 var(--ink);
+}
+.dash-side-card-empty::before{display:none}
+.dash-side-card-empty .dsc-eyebrow{color:var(--accent)}
+.dash-side-card-empty .dsc-empty-headline{
+  font-family:'Anton',sans-serif;
+  font-size:28px;
+  letter-spacing:0.02em;
+  margin-top:10px;
+  color:var(--ink);
+  text-transform:uppercase;
+}
+.dash-side-card-empty .dsc-empty-text{
+  margin-top:8px;
+  font-size:14px;
+  line-height:1.5;
+  color:var(--ink-soft);
+}
+.dash-side-card-empty .dsc-link{color:var(--accent);border-color:var(--accent)}
+
+/* Bottom strip */
+.dash-bottom{
+  margin-top:40px;
+  display:grid;
+  grid-template-columns:1.4fr 1fr;
+  gap:24px;
+  align-items:start;
+}
+.dash-challenges-strip{
+  background:var(--paper);
+  border:2px solid var(--ink);
+  padding:16px 18px;
+}
+.dash-challenges-strip-title{
+  font-family:'Anton',sans-serif;
+  font-size:13px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:10px;
+}
+.dash-ch-mini{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:8px 0;
+  border-bottom:1px dashed rgba(0,0,0,0.1);
+}
+.dash-ch-mini:last-child{border-bottom:none}
+.dch-icon{font-size:20px;line-height:1}
+.dch-text{font-size:12px;line-height:1.3}
+.dch-text b{font-family:'Anton',sans-serif;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;display:block}
+.dch-text span{color:var(--muted);font-size:11px}
+.dch-prog{font-family:'Anton',sans-serif;font-size:14px;color:var(--accent);letter-spacing:0.02em}
+
+.dash-shortcuts{display:flex;flex-direction:column;gap:8px}
+.dash-shortcut{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  background:var(--paper);
+  border:2px solid var(--ink);
+  text-decoration:none;
+  color:var(--ink);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+}
+.dash-shortcut:hover{
+  transform:translateX(4px);
+  box-shadow:-4px 4px 0 var(--accent);
+}
+.dsh-icon{font-size:24px;line-height:1;flex-shrink:0}
+.dsh-text{display:flex;flex-direction:column;line-height:1.2}
+.dsh-text b{
+  font-family:'Anton',sans-serif;
+  font-size:13px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+}
+.dsh-text span{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* By default (logged-out): dashboard hero hidden, marketing hero shown */
+#dashHero{display:none}
+/* When logged in: hide marketing sections, show dashboard */
+body.has-session #marketingHero,
+body.has-session .marketing-only{display:none}
+body.has-session #dashHero{display:block}
+
+/* Mobile dashboard adjustments */
+@media (max-width: 880px){
+  .dash-hero{padding:24px 16px 40px}
+  .dash-hero::before,.dash-hero::after{display:none}
+  .dash-grid{grid-template-columns:1fr;gap:24px}
+  .dash-stats{grid-template-columns:1fr 1fr;gap:6px}
+  .dash-stat{padding:14px}
+  .dash-stat-num{font-size:30px}
+  .dash-stat-lbl{font-size:8px}
+  .dash-bottom{grid-template-columns:1fr}
+  .dash-side-card{padding:18px 16px;transform:rotate(0)}
+  .dsc-score{font-size:48px}
+  .dsc-weak-avg{font-size:38px}
+  .dash-side-card-empty .dsc-empty-headline{font-size:22px}
+}
+
+/* ======================= NAV ======================= */
 .nav{position:sticky;top:2px;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--ink);background:var(--bg);transition:padding .3s cubic-bezier(.2,.9,.3,1), background .3s ease, box-shadow .3s ease}
 .nav.scrolled{padding:12px 28px;background:rgba(243,239,230,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 2px 0 var(--ink), 0 8px 24px rgba(0,0,0,0.08)}
 .nav .gc-logo{transition:font-size .3s cubic-bezier(.2,.9,.3,1)}
@@ -183,22 +545,80 @@ body::before{
 
 /* ======================= HERO ======================= */
 .hero{position:relative;z-index:2;padding:64px 28px 48px;border-bottom:1px solid var(--ink)}
-.hero-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:center;max-width:1280px;margin:0 auto}
-.hero-headline{font-family:'Anton',sans-serif;font-size:clamp(56px,9vw,128px);line-height:0.9;letter-spacing:-0.015em;text-transform:uppercase;color:var(--ink)}
-.hero-headline .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent);letter-spacing:-0.02em}
+.hero-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:center;max-width:1280px;margin:0 auto;position:relative}
+/* Broken-grid: offset corner numerals to anchor the layout */
+.hero-grid::before{content:"01";position:absolute;top:-20px;left:-10px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--accent);letter-spacing:0.16em;opacity:0.7;writing-mode:vertical-rl;transform:rotate(180deg)}
+.hero-grid::after{content:"// FORM CHECK / v6";position:absolute;top:0;right:0;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--ink-soft);letter-spacing:0.12em;opacity:0.55}
+@media (max-width:960px){
+  .hero-grid::before,.hero-grid::after{display:none}
+}
+.hero-headline{font-family:'Anton',sans-serif;font-size:clamp(56px,9vw,128px);line-height:0.9;letter-spacing:-0.015em;text-transform:uppercase;color:var(--ink);position:relative}
+/* Offset the second line slightly to break the grid */
+.hero-headline > br + *,
+.hero-headline > br:first-of-type{display:block}
+.hero-headline .ital{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;text-transform:none;color:var(--accent);letter-spacing:-0.02em;position:relative;display:inline-block;transform:translateX(0.1em) translateY(-0.05em) rotate(-2deg)}
 
 .hero-promise{margin-top:28px;font-size:18px;line-height:1.55;max-width:560px;color:var(--ink-soft);padding-left:18px;border-left:3px solid var(--accent)}
 .hero-promise b{color:var(--ink);font-weight:600}
 
-.hero-cta-row{margin-top:36px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.04em;padding:18px 28px;border:2px solid var(--ink);background:var(--ink);color:var(--bg);transition:transform .15s, box-shadow .15s, background .15s;cursor:pointer}
-.btn:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 var(--accent);background:var(--accent);border-color:var(--accent);color:var(--ink)}
-.btn.ghost{background:transparent;color:var(--ink)}
-.btn.ghost:hover{background:var(--ink);color:var(--bg);box-shadow:6px 6px 0 var(--ink)}
-.btn.acid{background:var(--acid);color:var(--ink);border-color:var(--ink)}
-.btn.acid:hover{background:var(--ink);color:var(--acid);box-shadow:6px 6px 0 var(--ink)}
-.btn.big{padding:22px 32px;font-size:15px}
-.btn .arrow{font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;font-weight:400}
+.hero-cta-row{margin-top:36px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+
+/* STAMPED PRINT-PRESS BUTTONS
+   Multi-shadow stack creates a debossed-into-paper feel.
+   Hover lifts the button off the page with red stamping. */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:'Anton',sans-serif;font-size:14px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;
+  padding:18px 28px;
+  border:2.5px solid var(--ink);background:var(--ink);color:var(--bg);
+  position:relative;
+  cursor:pointer;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease, background .15s;
+  /* Stamped multi-shadow: red offset + ink shadow + paper indent */
+  box-shadow:
+    4px 4px 0 var(--accent),
+    4px 4px 0 2px var(--ink),
+    inset 0 -2px 0 rgba(0,0,0,0.15);
+}
+.btn:hover{
+  transform:translate(-3px,-3px);
+  box-shadow:
+    7px 7px 0 var(--accent),
+    7px 7px 0 2px var(--ink),
+    inset 0 -2px 0 rgba(0,0,0,0.15);
+  background:var(--accent);
+  border-color:var(--ink);
+  color:var(--bg);
+}
+.btn:active{
+  transform:translate(2px,2px);
+  box-shadow:
+    1px 1px 0 var(--accent),
+    1px 1px 0 2px var(--ink),
+    inset 0 2px 4px rgba(0,0,0,0.25);
+}
+/* Optional mono accent ID code under the label */
+.btn[data-stamp]::after{
+  content:attr(data-stamp);
+  position:absolute;
+  bottom:-14px;left:0;
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:500;
+  letter-spacing:0.18em;
+  color:var(--ink-soft);
+  opacity:0.65;
+}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:4px 4px 0 var(--ink), 4px 4px 0 2px var(--ink), inset 0 -2px 0 rgba(0,0,0,0.05)}
+.btn.ghost:hover{background:var(--ink);color:var(--bg);box-shadow:7px 7px 0 var(--accent), 7px 7px 0 2px var(--ink), inset 0 -2px 0 rgba(0,0,0,0.15)}
+.btn.acid{background:var(--acid);color:var(--ink);border-color:var(--ink);box-shadow:4px 4px 0 var(--ink), 4px 4px 0 2px var(--ink), inset 0 -2px 0 rgba(0,0,0,0.1)}
+.btn.acid:hover{background:var(--ink);color:var(--acid);box-shadow:7px 7px 0 var(--accent), 7px 7px 0 2px var(--ink), inset 0 -2px 0 rgba(0,0,0,0.15)}
+.btn.big{padding:22px 34px;font-size:16px;letter-spacing:0.12em}
+.btn .arrow{font-family:'Instrument Serif',serif;font-style:italic;font-size:20px;font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px}
+
+@media (max-width: 768px){
+  .btn{padding:14px 20px;font-size:13px;letter-spacing:0.08em;min-height:44px;box-shadow:3px 3px 0 var(--accent), 3px 3px 0 2px var(--ink), inset 0 -2px 0 rgba(0,0,0,0.15)}
+  .btn.big{padding:16px 22px;font-size:14px}
+}
 
 .hero-trust{margin-top:18px;display:flex;flex-wrap:wrap;gap:18px;font-size:12px;font-weight:500;color:var(--muted)}
 .hero-trust span{display:flex;align-items:center;gap:6px}
@@ -572,6 +992,439 @@ body::before{
 
 /* STAT GRID */
 .ac-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:36px}
+
+/* === IDENTITY CARD — top of Overview === */
+.ac-identity-card{
+  position:relative;
+  margin-bottom:18px;
+  padding:22px 24px;
+  background:linear-gradient(135deg, var(--ink) 0%, #1a1a1a 100%);
+  color:var(--bg);
+  overflow:hidden;
+  border-radius:0;
+  border-left:5px solid var(--accent);
+}
+.ac-id-glow{
+  position:absolute;
+  top:-50%;right:-20%;
+  width:60%;height:200%;
+  background:radial-gradient(ellipse, rgba(255,45,0,0.25), transparent 60%);
+  pointer-events:none;
+  filter:blur(20px);
+}
+.ac-id-content{
+  position:relative;
+  z-index:2;
+  display:flex;
+  gap:18px;
+  align-items:center;
+}
+.ac-id-photo{
+  width:84px;height:84px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#0a0a0a,#1a1a1a);
+  border:3px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;
+  flex-shrink:0;
+  overflow:hidden;
+  box-shadow:0 0 0 4px rgba(255,45,0,0.15), 0 8px 24px rgba(0,0,0,0.4);
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.ac-id-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.ac-identity-card:hover .ac-id-photo{transform:scale(1.06) rotate(-3deg)}
+.ac-id-body{flex:1;min-width:0}
+.ac-id-handle{
+  font-family:'Anton',sans-serif;
+  font-size:30px;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+  color:var(--bg);
+  line-height:1.05;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.ac-id-bio{
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+  font-size:14px;
+  color:#aaa;
+  margin-top:4px;
+  line-height:1.4;
+}
+.ac-id-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:10px;
+}
+.ac-id-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px 8px;
+  background:rgba(255,45,0,0.18);
+  color:#ffaa88;
+  font-family:'Inter',sans-serif;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  border:1px solid rgba(255,45,0,0.35);
+}
+
+/* === INFO BAR — bodyweight, height, exp pills === */
+.ac-info-bar{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:8px;
+  margin-bottom:18px;
+}
+.ac-info-pill{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  padding:11px 12px;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+  border-left:3px solid var(--accent);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.ac-info-pill:hover{transform:translateY(-2px)}
+.aip-lbl{
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:0.14em;
+  color:var(--muted);
+  text-transform:uppercase;
+}
+.aip-val{
+  font-family:'Anton',sans-serif;
+  font-size:18px;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-transform:uppercase;
+  line-height:1;
+}
+
+/* === GOAL CARD === */
+.ac-goal-card{
+  padding:18px 22px;
+  background:linear-gradient(135deg, rgba(255,45,0,0.08), rgba(255,45,0,0.02));
+  border:2px solid var(--ink);
+  border-left:5px solid var(--accent);
+  margin-bottom:18px;
+  position:relative;
+  overflow:hidden;
+}
+.ac-goal-card::before{
+  content:"";position:absolute;
+  top:-50%;right:-30%;
+  width:60%;height:200%;
+  background:radial-gradient(ellipse, rgba(255,45,0,0.12), transparent 60%);
+  pointer-events:none;
+}
+.ac-goal-card-head{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  position:relative;
+  z-index:2;
+}
+.ac-goal-emoji-big{
+  font-size:42px;
+  line-height:1;
+  filter:drop-shadow(0 4px 8px rgba(255,45,0,0.3));
+}
+.ac-goal-card-info{flex:1}
+.ac-goal-card-lbl{
+  display:block;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.18em;
+  color:var(--muted);
+  text-transform:uppercase;
+  margin-bottom:2px;
+}
+.ac-goal-card-val{
+  display:block;
+  font-family:'Anton',sans-serif;
+  font-size:26px;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  line-height:1.05;
+}
+.ac-goal-card-quote{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px dashed rgba(0,0,0,0.15);
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+  font-size:14px;
+  color:var(--ink-soft);
+  line-height:1.4;
+  position:relative;
+  z-index:2;
+}
+.ac-goal-card-quote:empty{display:none}
+.ac-goal-card-quote::before{content:"“";color:var(--accent);font-size:24px;line-height:0;vertical-align:-8px;margin-right:2px}
+.ac-goal-card-quote::after{content:"”";color:var(--accent);font-size:24px;line-height:0;vertical-align:-8px;margin-left:2px}
+
+/* === BIRTHDAY BANNER === */
+.ac-birthday-banner{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 20px;
+  margin-bottom:18px;
+  background:linear-gradient(135deg, #d8ff00, #ffe300);
+  color:var(--ink);
+  border:3px solid var(--ink);
+  position:relative;
+  overflow:hidden;
+  animation:birthdayWiggle 0.6s ease-in-out infinite alternate, birthdaySheen 3s linear infinite;
+}
+@keyframes birthdayWiggle{
+  0%{transform:rotate(-0.3deg)}
+  100%{transform:rotate(0.3deg)}
+}
+@keyframes birthdaySheen{
+  0%,100%{box-shadow:0 0 20px rgba(216,255,0,0.4)}
+  50%{box-shadow:0 0 35px rgba(216,255,0,0.7)}
+}
+.abb-icon{font-size:38px;line-height:1;animation:birthdayBounce 0.8s ease-in-out infinite alternate}
+.abb-confetti{font-size:30px;animation:birthdayConfetti 1.4s ease-in-out infinite}
+@keyframes birthdayBounce{0%{transform:translateY(0) rotate(-8deg)}100%{transform:translateY(-4px) rotate(8deg)}}
+@keyframes birthdayConfetti{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(15deg)}}
+.abb-text{flex:1;line-height:1.35}
+.abb-text b{display:block;font-family:'Anton',sans-serif;font-size:16px;letter-spacing:0.04em;text-transform:uppercase}
+.abb-text span{display:block;font-size:12px;font-weight:500;margin-top:2px}
+
+/* === STREAK TRACK === */
+.ac-streak-track{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.ac-streak-milestone{
+  flex:1 1 calc(20% - 6px);
+  min-width:80px;
+  padding:14px 8px;
+  background:var(--paper);
+  border:2px solid var(--ink);
+  text-align:center;
+  position:relative;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.ac-streak-milestone:hover{transform:translateY(-3px)}
+.ac-streak-milestone.earned{
+  background:linear-gradient(135deg, var(--ink), #1a1a1a);
+  color:var(--bg);
+  border-color:var(--accent);
+  box-shadow:0 4px 0 var(--accent);
+}
+.ac-streak-milestone.earned::before{
+  content:"✓";
+  position:absolute;
+  top:4px;right:6px;
+  font-family:'Anton',sans-serif;
+  font-size:14px;
+  color:var(--accent);
+}
+.ac-streak-milestone.current{
+  border-color:var(--accent);
+  border-width:3px;
+  animation:streakPulse 1.4s ease-in-out infinite;
+}
+@keyframes streakPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,45,0,0.4)}
+  50%{box-shadow:0 0 0 6px rgba(255,45,0,0)}
+}
+.asm-icon{font-size:22px;line-height:1;margin-bottom:5px}
+.asm-days{font-family:'Anton',sans-serif;font-size:18px;letter-spacing:0.02em;line-height:1;margin-bottom:3px}
+.asm-name{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);line-height:1.1}
+.ac-streak-milestone.earned .asm-name,
+.ac-streak-milestone.earned .asm-days{color:var(--bg)}
+.ac-streak-milestone.earned .asm-name{color:#888}
+
+/* === STRENGTH RANK CARD === */
+.ac-rank-card{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-rows:auto auto;
+  gap:14px 20px;
+  padding:24px 28px;
+  background:linear-gradient(135deg, var(--ink), #1a1a1a);
+  color:var(--bg);
+  border:3px solid var(--ink);
+  border-left:6px solid var(--rank-color, var(--accent));
+  position:relative;
+  overflow:hidden;
+}
+.ac-rank-card::before{
+  content:"";
+  position:absolute;
+  top:-50%;right:-30%;
+  width:60%;height:200%;
+  background:radial-gradient(ellipse, var(--rank-glow, rgba(255,45,0,0.18)), transparent 60%);
+  pointer-events:none;
+  filter:blur(20px);
+}
+.ac-rank-icon{
+  font-size:64px;
+  line-height:1;
+  grid-row:1/3;
+  position:relative;
+  z-index:2;
+  filter:drop-shadow(0 4px 16px rgba(255,255,255,0.15));
+  animation:rankFloat 3s ease-in-out infinite alternate;
+}
+@keyframes rankFloat{0%{transform:translateY(0) rotate(-2deg)}100%{transform:translateY(-4px) rotate(2deg)}}
+.ac-rank-info{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center}
+.ac-rank-name{
+  font-family:'Anton',sans-serif;
+  font-size:36px;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+  color:var(--rank-color, var(--accent));
+  line-height:1.05;
+  text-shadow:0 0 24px var(--rank-glow, rgba(255,45,0,0.4));
+}
+.ac-rank-desc{
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  font-weight:500;
+  color:#aaa;
+  margin-top:4px;
+  letter-spacing:0.03em;
+}
+.ac-rank-meter{
+  grid-column:1/3;
+  position:relative;
+  z-index:2;
+  margin-top:6px;
+}
+.ac-rank-meter-fill{
+  height:8px;
+  background:linear-gradient(90deg, #888 0%, #00d4ff 22%, #a855f7 42%, #ff6f00 62%, #ff2d00 78%, #d8ff00 95%);
+  width:0%;
+  transition:width 1.4s cubic-bezier(.2,.9,.3,1);
+  position:relative;
+}
+.ac-rank-meter-fill::after{
+  content:"";
+  position:absolute;
+  right:-7px;top:-3px;
+  width:14px;height:14px;
+  background:var(--rank-color, var(--accent));
+  border:2px solid var(--bg);
+  border-radius:50%;
+  box-shadow:0 0 12px var(--rank-color, var(--accent));
+}
+.ac-rank-meter-stops{
+  display:flex;
+  justify-content:space-between;
+  margin-top:8px;
+  font-family:'JetBrains Mono','Inter',monospace;
+  font-size:10px;
+  font-weight:600;
+  color:#666;
+  letter-spacing:0.04em;
+}
+
+/* === WEAKNESS DASHBOARD === */
+.ac-weakness-card{
+  padding:22px 24px;
+  background:linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+  color:var(--bg);
+  border:3px solid var(--ink);
+  border-left:6px solid #ff6f00;
+  position:relative;
+  overflow:hidden;
+}
+.ac-weakness-card::before{
+  content:"";
+  position:absolute;
+  top:-50%;right:-30%;
+  width:60%;height:200%;
+  background:radial-gradient(ellipse, rgba(255,111,0,0.18), transparent 60%);
+  pointer-events:none;
+  filter:blur(20px);
+}
+.aw-head{position:relative;z-index:2;margin-bottom:18px}
+.aw-eyebrow{font-family:'Anton',sans-serif;font-size:10px;letter-spacing:0.26em;color:#ff6f00;text-transform:uppercase;margin-bottom:4px}
+.aw-lift{font-family:'Anton',sans-serif;font-size:32px;letter-spacing:0.02em;text-transform:uppercase;color:var(--bg);line-height:1}
+.aw-tag{display:inline-block;margin-top:8px;padding:3px 10px;background:rgba(255,111,0,0.15);color:#ff8a3d;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;border:1px solid rgba(255,111,0,0.4)}
+
+.aw-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;position:relative;z-index:2;margin-bottom:18px}
+.aw-stat{background:rgba(255,255,255,0.04);padding:12px;border:1px solid rgba(255,255,255,0.08);text-align:center}
+.aw-stat-num{font-family:'Anton',sans-serif;font-size:24px;color:var(--bg);line-height:1;letter-spacing:-0.01em}
+.aw-stat-lbl{font-size:8px;font-weight:700;letter-spacing:0.14em;color:#888;margin-top:4px;text-transform:uppercase}
+.aw-stat .aw-stat-num.up{color:#10b981}
+.aw-stat .aw-stat-num.down{color:#ff2d00}
+.aw-stat .aw-stat-num.flat{color:#888}
+
+.aw-progress{position:relative;z-index:2;margin-bottom:18px}
+.aw-prog-lbl{font-size:10px;color:#888;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px;font-weight:700}
+.aw-prog-bars{display:flex;gap:5px;align-items:flex-end;height:60px}
+.aw-prog-bar{flex:1;background:linear-gradient(180deg, #ff6f00, #ff2d00);border-radius:2px 2px 0 0;position:relative;transition:height 0.8s cubic-bezier(.2,.9,.3,1);min-height:4px}
+.aw-prog-bar::after{content:attr(data-score);position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-family:'Anton',sans-serif;font-size:10px;color:var(--bg);letter-spacing:0.02em}
+.aw-prog-bar.latest{background:linear-gradient(180deg, #d8ff00, #aeff00)}
+
+.aw-drill{display:flex;align-items:flex-start;gap:10px;padding:14px;background:rgba(255,111,0,0.08);border:1px dashed rgba(255,111,0,0.3);border-radius:0;position:relative;z-index:2}
+.aw-drill-icon{font-size:22px;line-height:1;flex-shrink:0}
+.aw-drill-text{font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;color:#ddd}
+.aw-drill-text b{color:#ff8a3d}
+
+/* === WEEKLY CHALLENGES === */
+.ac-challenge-list{display:grid;gap:10px}
+.ac-challenge{
+  position:relative;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:14px;
+  align-items:center;
+  padding:14px 18px;
+  background:var(--paper);
+  border:2px solid var(--ink);
+  border-left:5px solid var(--challenge-color, var(--accent));
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+}
+.ac-challenge:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--ink)}
+.ac-challenge.complete{
+  background:linear-gradient(135deg, rgba(216,255,0,0.15), rgba(216,255,0,0.05));
+  border-color:var(--ink);
+  border-left-color:#d8ff00;
+}
+.ac-challenge.complete::after{
+  content:"✓ DONE";
+  position:absolute;
+  top:8px;right:12px;
+  font-family:'Anton',sans-serif;
+  font-size:10px;
+  letter-spacing:0.18em;
+  color:#10b981;
+  background:rgba(16,185,129,0.12);
+  padding:2px 8px;
+}
+.ac-ch-icon{
+  width:48px;height:48px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  background:linear-gradient(135deg, var(--challenge-color, var(--accent)), rgba(255,255,255,0.05));
+  border-radius:50%;
+  flex-shrink:0;
+}
+.ac-ch-body{min-width:0}
+.ac-ch-name{font-family:'Anton',sans-serif;font-size:16px;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink);line-height:1.1}
+.ac-ch-desc{font-size:12px;color:var(--ink-soft);margin-top:3px;line-height:1.4}
+.ac-ch-progress{
+  width:60px;
+  flex-shrink:0;
+  text-align:right;
+}
+.ac-ch-prog-num{font-family:'Anton',sans-serif;font-size:18px;color:var(--challenge-color, var(--accent));letter-spacing:0.02em}
+.ac-ch-prog-lbl{font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-top:2px}
+
 .ac-stat-card{background:var(--paper);border:2px solid var(--ink);padding:22px;text-align:center;cursor:default}
 .ac-stat-num{font-family:'Anton',sans-serif;font-size:48px;line-height:0.9;color:var(--accent);letter-spacing:-0.02em;margin-bottom:4px}
 .ac-stat-lbl{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase}
@@ -614,6 +1467,89 @@ body::before{
 /* LIFTS BREAKDOWN */
 .ac-lifts-list{display:grid;gap:10px}
 .ac-lift-row{display:grid;grid-template-columns:1fr 80px 80px;gap:14px;align-items:center;padding:14px 16px;background:var(--paper);border:2px solid var(--ink);transition:transform .25s cubic-bezier(.2,.9,.3,1)}
+
+/* Detailed lift row with PB rank + trend */
+.ac-lift-row-detailed{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:14px;
+  align-items:center;
+  padding:14px 16px;
+  margin-bottom:8px;
+  background:var(--paper);
+  border:2px solid var(--ink);
+  border-left:4px solid var(--accent);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+}
+.ac-lift-row-detailed:hover{transform:translateX(4px);box-shadow:-4px 4px 0 var(--ink)}
+.ac-lift-row-main{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ac-lift-row-main .ac-lift-row-name{font-family:'Anton',sans-serif;font-size:17px;letter-spacing:0.04em;text-transform:uppercase;line-height:1.1}
+.ac-lift-row-meta{display:flex;gap:6px;flex-wrap:wrap}
+.alr-pill{
+  display:inline-flex;
+  align-items:baseline;
+  gap:4px;
+  padding:3px 8px;
+  background:var(--bg);
+  border:1px solid var(--ink);
+}
+.alr-pill-num{font-family:'Anton',sans-serif;font-size:13px;color:var(--ink);letter-spacing:0.02em}
+.alr-pill-lbl{font-size:8px;font-weight:700;letter-spacing:0.14em;color:var(--muted)}
+.ac-lift-trend{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px 8px;
+  font-family:'Anton',sans-serif;
+  font-size:11px;
+  letter-spacing:0.06em;
+  border:1px solid;
+}
+.ac-lift-trend.up{background:rgba(16,185,129,0.12);color:#10b981;border-color:#10b981}
+.ac-lift-trend.down{background:rgba(255,45,0,0.12);color:#ff2d00;border-color:#ff2d00}
+.ac-lift-trend.flat{background:rgba(255,255,255,0.08);color:var(--muted);border-color:var(--muted)}
+
+.ac-lift-row-pb{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px;
+  background:var(--ink);
+  color:var(--bg);
+  border-left:3px solid var(--rank-color, var(--accent));
+  min-width:170px;
+}
+.alr-pb-rank{
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;line-height:1;
+  background:linear-gradient(135deg, var(--rank-color, var(--accent)), rgba(255,255,255,0.05));
+  border-radius:50%;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,0.15));
+}
+.alr-pb-info{flex:1;min-width:0;line-height:1.15}
+.alr-pb-score{
+  font-family:'Anton',sans-serif;
+  font-size:22px;
+  letter-spacing:0.02em;
+  color:var(--bg);
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.alr-pb-tier{
+  font-size:10px;
+  letter-spacing:0.14em;
+  color:var(--rank-color, var(--accent));
+}
+.alr-pb-lbl{
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:0.14em;
+  color:#888;
+  margin-top:1px;
+}
 .ac-lift-row:hover{transform:translateX(6px) translateY(-2px);box-shadow:4px 4px 0 var(--accent)}
 .ac-lift-row-name{font-family:'Anton',sans-serif;font-size:18px;letter-spacing:0.02em;text-transform:uppercase}
 .ac-lift-row-count{font-family:'Anton',sans-serif;font-size:22px;color:var(--ink);text-align:center}
@@ -827,6 +1763,77 @@ body::before{
 @keyframes slideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 
 .result-card{background:var(--ink);color:var(--bg);padding:48px;border:3px solid var(--ink);position:relative;overflow:hidden}
+
+/* === PB BANNER === */
+.pb-banner{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  padding:20px 28px;
+  margin-bottom:18px;
+  background:linear-gradient(135deg, #d8ff00 0%, #aeff00 100%);
+  color:var(--ink);
+  border:3px solid var(--ink);
+  position:relative;
+  overflow:hidden;
+  animation:pbBannerEntrance .8s cubic-bezier(.34,1.56,.64,1), pbBannerGlow 2s ease-in-out infinite alternate;
+  box-shadow:0 8px 0 var(--accent), 0 16px 32px rgba(0,0,0,0.15);
+}
+@keyframes pbBannerEntrance{
+  0%{transform:translateY(-30px) scale(0.95);opacity:0}
+  60%{transform:translateY(8px) scale(1.02)}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+@keyframes pbBannerGlow{
+  0%{box-shadow:0 8px 0 var(--accent), 0 16px 32px rgba(0,0,0,0.15)}
+  100%{box-shadow:0 8px 0 var(--accent), 0 16px 48px rgba(216,255,0,0.5)}
+}
+.pb-banner-confetti{font-size:42px;line-height:1;animation:pbConfetti 0.7s ease-in-out infinite alternate}
+@keyframes pbConfetti{
+  0%{transform:translateY(0) rotate(-12deg) scale(1)}
+  100%{transform:translateY(-8px) rotate(12deg) scale(1.1)}
+}
+.pb-banner-medal{font-size:54px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.2));animation:pbMedal 1.4s ease-in-out infinite alternate}
+@keyframes pbMedal{
+  0%{transform:rotate(-4deg)}
+  100%{transform:rotate(4deg)}
+}
+.pb-banner-content{flex:1;min-width:0}
+.pb-banner-eyebrow{
+  font-family:'Anton',sans-serif;
+  font-size:11px;
+  letter-spacing:0.26em;
+  color:var(--accent);
+  text-transform:uppercase;
+  line-height:1;
+}
+.pb-banner-headline{
+  font-family:'Anton',sans-serif;
+  font-size:28px;
+  letter-spacing:0.02em;
+  text-transform:uppercase;
+  line-height:1.05;
+  margin-top:4px;
+  color:var(--ink);
+}
+.pb-banner-meta{
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink);
+  margin-top:6px;
+  letter-spacing:0.04em;
+}
+.pb-banner-meta b{color:var(--accent)}
+
+@media (max-width:768px){
+  .pb-banner{padding:14px 16px;gap:12px}
+  .pb-banner-confetti{font-size:30px}
+  .pb-banner-medal{font-size:38px}
+  .pb-banner-eyebrow{font-size:9px;letter-spacing:0.2em}
+  .pb-banner-headline{font-size:18px}
+  .pb-banner-meta{font-size:11px}
+}
 .result-card::before{content:"";position:absolute;top:-50%;right:-30%;width:600px;height:600px;background:radial-gradient(circle, rgba(255,45,0,0.12), transparent 60%);pointer-events:none}
 
 .result-brand{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid #2a2a2a;position:relative;z-index:1}
@@ -1237,6 +2244,60 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
 
   /* Personalization inputs on small screens */
   .ac-input-row{grid-template-columns:1fr;gap:8px}
+
+  /* === NEW Overview cards on mobile === */
+  .ac-identity-card{padding:16px 14px}
+  .ac-id-content{gap:14px}
+  .ac-id-photo{width:64px;height:64px;font-size:32px;border-width:2px}
+  .ac-id-handle{font-size:22px}
+  .ac-id-bio{font-size:12px}
+  .ac-id-tag{font-size:9px;padding:2px 6px}
+  .ac-info-bar{grid-template-columns:1fr 1fr;gap:6px}
+  .ac-info-pill{padding:9px 10px}
+  .aip-val{font-size:15px}
+  .aip-lbl{font-size:8px}
+  .ac-goal-card{padding:14px 16px}
+  .ac-goal-emoji-big{font-size:34px}
+  .ac-goal-card-val{font-size:20px}
+  .ac-goal-card-quote{font-size:12px;margin-top:8px;padding-top:8px}
+  .ac-birthday-banner{padding:12px 14px}
+  .abb-icon{font-size:28px}
+  .abb-confetti{font-size:22px;display:none}
+  .abb-text b{font-size:13px}
+  .abb-text span{font-size:11px}
+  .ac-streak-milestone{flex-basis:calc(50% - 3px);min-width:0;padding:10px 6px}
+  .asm-icon{font-size:18px}
+  .asm-days{font-size:14px}
+  .asm-name{font-size:8px}
+
+  /* New By Lift detailed rows on mobile */
+  .ac-lift-row-detailed{grid-template-columns:1fr;gap:10px;padding:12px}
+  .ac-lift-row-pb{min-width:0;padding:7px 10px}
+  .ac-lift-row-main .ac-lift-row-name{font-size:15px}
+  .alr-pb-rank{width:30px;height:30px;font-size:17px}
+  .alr-pb-score{font-size:18px}
+  .alr-pb-lbl{font-size:8px}
+  .alr-pb-tier{font-size:9px}
+
+  /* Weakness Dashboard mobile */
+  .ac-weakness-card{padding:16px 16px}
+  .aw-lift{font-size:24px}
+  .aw-eyebrow{font-size:9px;letter-spacing:0.2em}
+  .aw-stat-num{font-size:18px}
+  .aw-stat-lbl{font-size:7px}
+  .aw-prog-bars{height:50px}
+  .aw-drill{padding:10px 12px;gap:8px}
+  .aw-drill-icon{font-size:18px}
+  .aw-drill-text{font-size:12px}
+
+  /* Challenges mobile */
+  .ac-challenge{padding:12px 14px;gap:10px}
+  .ac-ch-icon{width:38px;height:38px;font-size:20px}
+  .ac-ch-name{font-size:13px}
+  .ac-ch-desc{font-size:11px}
+  .ac-ch-progress{width:50px}
+  .ac-ch-prog-num{font-size:15px}
+  .ac-ch-prog-lbl{font-size:8px}
 }
 
 /* Smaller phones (iPhone SE etc.) */
@@ -1269,7 +2330,105 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
 </nav>
 
 <!-- ======================= HERO ======================= -->
-<section class="hero">
+<!-- LOGGED-IN DASHBOARD HERO — shows when session exists, replaces marketing hero -->
+<section class="dash-hero" id="dashHero">
+  <div class="dash-grid">
+    <div class="dash-main">
+      <div class="dash-eyebrow">
+        <span class="dash-eyebrow-dot"></span>
+        <span class="dash-eyebrow-code">// SESSION ACTIVE</span>
+        <span class="dash-eyebrow-divider"></span>
+        <span class="dash-eyebrow-time" id="dashTime">GOOD MORNING</span>
+      </div>
+      <h1 class="dash-headline">
+        WELCOME BACK,<br/><span class="dash-name" id="dashName">LIFTER</span><span class="dash-period">.</span>
+      </h1>
+      <p class="dash-prompt" id="dashPrompt">Ready to check another lift?</p>
+
+      <div class="dash-cta-row">
+        <a href="#app" class="btn big" data-stamp="// PRIMARY ACTION">
+          <span>RUN NEW CHECK</span>
+          <span class="arrow">→</span>
+        </a>
+        <a href="#" class="btn ghost" onclick="event.preventDefault();openAccountCenter();">
+          <span>MY ACCOUNT</span>
+          <span class="arrow">→</span>
+        </a>
+      </div>
+
+      <!-- Personal stats strip -->
+      <div class="dash-stats">
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="dashStatChecks">0</div>
+          <div class="dash-stat-lbl">CHECKS DONE</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="dashStatBest">—</div>
+          <div class="dash-stat-lbl">BEST SCORE</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="dashStatStreak">0</div>
+          <div class="dash-stat-lbl">DAY STREAK</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="dashStatThisWeek">0</div>
+          <div class="dash-stat-lbl">THIS WEEK</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: latest check OR weakness focus -->
+    <div class="dash-side">
+      <div class="dash-side-card" id="dashLatestCard" style="display:none">
+        <div class="dsc-eyebrow">LAST CHECK</div>
+        <div class="dsc-lift" id="dashLatestLift">—</div>
+        <div class="dsc-score-row">
+          <div class="dsc-score" id="dashLatestScore">—</div>
+          <div class="dsc-meta">
+            <div class="dsc-grade" id="dashLatestGrade">—</div>
+            <div class="dsc-date" id="dashLatestDate">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-side-card dash-side-card-weak" id="dashWeakCard" style="display:none">
+        <div class="dsc-eyebrow">🎯 FOCUS AREA</div>
+        <div class="dsc-lift" id="dashWeakLift">—</div>
+        <div class="dsc-weak-row">
+          <span class="dsc-weak-avg" id="dashWeakAvg">—</span>
+          <span class="dsc-weak-meta">avg over <span id="dashWeakCount">0</span> checks</span>
+        </div>
+        <a href="#" class="dsc-link" onclick="event.preventDefault();openAccountCenter();">SEE FULL BREAKDOWN →</a>
+      </div>
+      <div class="dash-side-card dash-side-card-empty" id="dashEmptyCard" style="display:none">
+        <div class="dsc-eyebrow">FRESH START</div>
+        <div class="dsc-empty-headline">No checks yet</div>
+        <p class="dsc-empty-text">Drop your first clip and we'll start tracking your form history, weak points, and personal bests.</p>
+        <a href="#app" class="dsc-link">RUN YOUR FIRST CHECK →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom strip: weekly challenges quick view + shortcuts -->
+  <div class="dash-bottom">
+    <div class="dash-challenges-strip" id="dashChallengesStrip"></div>
+    <div class="dash-shortcuts">
+      <a href="/exercises.html" class="dash-shortcut">
+        <span class="dsh-icon">📚</span>
+        <span class="dsh-text"><b>Exercise Library</b><span>142 lifts · full how-tos</span></span>
+      </a>
+      <a href="#" class="dash-shortcut" onclick="event.preventDefault();openAccountCenter('history');">
+        <span class="dsh-icon">📊</span>
+        <span class="dsh-text"><b>My History</b><span>Track your progress</span></span>
+      </a>
+      <a href="#" class="dash-shortcut" onclick="event.preventDefault();openAccountCenter('refer');">
+        <span class="dsh-icon">🎁</span>
+        <span class="dsh-text"><b>Refer a Friend</b><span>Earn free Pro checks</span></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="hero" id="marketingHero">
   <div class="hero-grid">
     <div>
       <div class="hero-badge">
@@ -1324,7 +2483,7 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
     <div class="lbl">upload to verdict</div>
   </div>
   <div class="stat">
-    <div class="num">10<span class="ital">+</span></div>
+    <div class="num">142<span class="ital">+</span></div>
     <div class="lbl">lifts supported</div>
   </div>
   <div class="stat">
@@ -1338,7 +2497,7 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
 </div>
 
 <!-- ======================= HOW IT WORKS ======================= -->
-<section class="section paper" id="how">
+<section class="section paper marketing-only" id="how">
   <div class="section-inner">
     <div class="section-head">
       <div>
@@ -1352,7 +2511,7 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
       <div class="step">
         <div class="step-num">1</div>
         <h3>UPLOAD <span class="ital">your</span> CLIP</h3>
-        <p>A phone video of your squat, bench, deadlift, or any of 10 supported lifts. Side angle works best. One rep is plenty.</p>
+        <p>A phone video of your squat, bench, deadlift, or any of 142 supported lifts. Side angle works best. One rep is plenty.</p>
         <div class="duration"><b>~5 SEC</b> · JPG · PNG · MP4 · MOV</div>
       </div>
       <div class="step">
@@ -1372,7 +2531,7 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
 </section>
 
 <!-- ======================= COMPARISON ======================= -->
-<section class="section">
+<section class="section marketing-only">
   <div class="section-inner">
     <div class="section-head">
       <div>
@@ -1435,7 +2594,7 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
       <div class="controls">
         <div>
           <div class="ctrl-label">
-            <span>WHICH LIFT? <span style="color:var(--accent);font-family:Instrument Serif,serif;font-style:italic;font-size:13px;letter-spacing:0;text-transform:none">— 60+ to pick from</span></span>
+            <span>WHICH LIFT? <span style="color:var(--accent);font-family:Instrument Serif,serif;font-style:italic;font-size:13px;letter-spacing:0;text-transform:none">— 142 to pick from</span></span>
             <span class="req">required</span>
           </div>
 
@@ -1494,6 +2653,16 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
     </div>
 
     <div class="result" id="result">
+      <!-- Personal Best banner — shown when a new PR is set -->
+      <div class="pb-banner" id="pbBanner" style="display:none">
+        <div class="pb-banner-confetti">🎉</div>
+        <div class="pb-banner-content">
+          <div class="pb-banner-eyebrow" id="pbBannerEyebrow">NEW PERSONAL BEST</div>
+          <div class="pb-banner-headline" id="pbBannerHeadline"></div>
+          <div class="pb-banner-meta" id="pbBannerMeta"></div>
+        </div>
+        <div class="pb-banner-medal">🏅</div>
+      </div>
       <div class="result-card">
         <div class="result-brand">
           <div class="gc-logo"><span class="gc-prefix">GYM</span><span class="check">check</span><span class="dot">.</span></div>
@@ -1710,7 +2879,7 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
 </section>
 
 <!-- ======================= FINAL CTA ======================= -->
-<section class="final-cta">
+<section class="final-cta marketing-only">
   <div class="final-cta-inner">
     <div class="gc-logo"><span class="gc-prefix">GYM</span><span class="check">check</span><span class="dot">.</span></div>
     <h2>STOP LIFTING <span class="ital">blind</span>.</h2>
@@ -1785,6 +2954,52 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
 
       <!-- OVERVIEW TAB -->
       <div class="ac-pane active" id="acPaneOverview">
+
+        <!-- IDENTITY CARD — shows PFP + bio + tags prominently -->
+        <div class="ac-identity-card ac-3d-card">
+          <div class="ac-id-glow"></div>
+          <div class="ac-id-content">
+            <div class="ac-id-photo" id="acIdPhoto">
+              <span id="acIdEmoji">🔥</span>
+            </div>
+            <div class="ac-id-body">
+              <div class="ac-id-handle" id="acIdHandle">LIFTER</div>
+              <div class="ac-id-bio" id="acIdBio">Your lifter statement appears here</div>
+              <div class="ac-id-tags" id="acIdTags"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PERSONAL INFO BAR — bodyweight, height, age, exp -->
+        <div class="ac-info-bar" id="acInfoBar">
+          <div class="ac-info-pill"><span class="aip-lbl">BODYWEIGHT</span><span class="aip-val" id="acInfoBW">—</span></div>
+          <div class="ac-info-pill"><span class="aip-lbl">HEIGHT</span><span class="aip-val" id="acInfoHeight">—</span></div>
+          <div class="ac-info-pill"><span class="aip-lbl">EXPERIENCE</span><span class="aip-val" id="acInfoExp">—</span></div>
+          <div class="ac-info-pill"><span class="aip-lbl">DAYS/WEEK</span><span class="aip-val" id="acInfoDays">—</span></div>
+        </div>
+
+        <!-- GOAL CARD — training focus + quote -->
+        <div class="ac-goal-card ac-3d-card" id="acGoalCard">
+          <div class="ac-goal-card-head">
+            <span class="ac-goal-emoji-big" id="acGoalEmoji">💪</span>
+            <div class="ac-goal-card-info">
+              <span class="ac-goal-card-lbl">CURRENT TRAINING GOAL</span>
+              <span class="ac-goal-card-val" id="acGoalCardVal">HYPERTROPHY</span>
+            </div>
+          </div>
+          <div class="ac-goal-card-quote" id="acGoalCardQuote"></div>
+        </div>
+
+        <!-- BIRTHDAY BANNER (shown only during birthday week) -->
+        <div class="ac-birthday-banner" id="acBirthdayBanner" style="display:none">
+          <span class="abb-icon">🎂</span>
+          <div class="abb-text">
+            <b>HAPPY BIRTHDAY <span id="abbName"></span>!</b>
+            <span>You unlocked a free BEAST week. Lift like an animal.</span>
+          </div>
+          <span class="abb-confetti">🎉</span>
+        </div>
+
         <!-- Big stats grid with 3D hover -->
         <div class="ac-stat-grid">
           <div class="ac-stat-card ac-3d-card">
@@ -1813,6 +3028,70 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
           </div>
         </div>
 
+        <!-- STREAK + REWARDS -->
+        <div class="ac-section" id="acStreakSection" style="display:none">
+          <h3 class="ac-section-title">🔥 STREAK REWARDS</h3>
+          <div class="ac-streak-track" id="acStreakTrack"></div>
+        </div>
+
+        <!-- STRENGTH RANK -->
+        <div class="ac-section" id="acRankSection" style="display:none">
+          <h3 class="ac-section-title">🏆 YOUR STRENGTH RANK</h3>
+          <div class="ac-rank-card ac-3d-card" id="acRankCard">
+            <div class="ac-rank-icon" id="acRankIcon">—</div>
+            <div class="ac-rank-info">
+              <div class="ac-rank-name" id="acRankName">UNRANKED</div>
+              <div class="ac-rank-desc" id="acRankDesc">Run a check to get your rank</div>
+            </div>
+            <div class="ac-rank-meter">
+              <div class="ac-rank-meter-fill" id="acRankMeterFill"></div>
+              <div class="ac-rank-meter-stops">
+                <span>40</span><span>60</span><span>75</span><span>85</span><span>90</span><span>95</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEAKNESS DASHBOARD -->
+        <div class="ac-section" id="acWeaknessSection" style="display:none">
+          <h3 class="ac-section-title">🎯 YOUR BIGGEST WEAKNESS</h3>
+          <div class="ac-weakness-card ac-3d-card" id="acWeaknessCard">
+            <div class="aw-head">
+              <div class="aw-eyebrow">FOCUS HERE</div>
+              <div class="aw-lift" id="acWeakLift">—</div>
+              <div class="aw-tag" id="acWeakTag">—</div>
+            </div>
+            <div class="aw-stats">
+              <div class="aw-stat">
+                <div class="aw-stat-num" id="acWeakAvg">—</div>
+                <div class="aw-stat-lbl">AVG SCORE</div>
+              </div>
+              <div class="aw-stat">
+                <div class="aw-stat-num" id="acWeakCount">—</div>
+                <div class="aw-stat-lbl">CHECKS</div>
+              </div>
+              <div class="aw-stat" id="acWeakTrendCell">
+                <div class="aw-stat-num" id="acWeakTrend">—</div>
+                <div class="aw-stat-lbl">TREND</div>
+              </div>
+            </div>
+            <div class="aw-progress" id="acWeakProgress">
+              <div class="aw-prog-lbl">Last 5 checks:</div>
+              <div class="aw-prog-bars" id="acWeakProgBars"></div>
+            </div>
+            <div class="aw-drill" id="acWeakDrill">
+              <div class="aw-drill-icon">💡</div>
+              <div class="aw-drill-text" id="acWeakDrillText">Run more checks to get a personalized fix.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEEKLY CHALLENGES -->
+        <div class="ac-section">
+          <h3 class="ac-section-title">⚔ THIS WEEK'S CHALLENGES</h3>
+          <div class="ac-challenge-list" id="acChallengeList"></div>
+        </div>
+
         <!-- Quick actions -->
         <div class="ac-section">
           <h3 class="ac-section-title">QUICK ACTIONS</h3>
@@ -1828,7 +3107,7 @@ footer{padding:60px 28px 40px;text-align:left;border-top:2px solid var(--ink);ba
               <div class="ac-action-icon">📚</div>
               <div>
                 <b>Browse exercises</b>
-                <span>105 lifts, full how-tos</span>
+                <span>142 lifts, full how-tos</span>
               </div>
             </a>
             <a href="#pricing" class="ac-action-card ac-3d-card" onclick="closeAccountCenter()">
@@ -2387,9 +3666,32 @@ function burnCheck(scoreData){
     const acct=getAccount(session.email)||{};
     acct.usage=acct.usage||{};
     acct.usage[monthKey]=(acct.usage[monthKey]||0)+1;
-    // Save history
+    // Save history + detect new PB
     if (scoreData) {
       acct.history = acct.history || [];
+
+      // Check for new PB BEFORE adding the new entry
+      const prevBest = acct.history
+        .filter(h => h.lift === scoreData.lift && typeof h.score === 'number')
+        .reduce((max, h) => Math.max(max, h.score), 0);
+      const isNewPB = scoreData.score > prevBest && acct.history.some(h => h.lift === scoreData.lift);
+      const isFirstCheckForLift = !acct.history.some(h => h.lift === scoreData.lift);
+      // We celebrate a "PB" if it beats a previous attempt by ≥3 points (small improvements feel less special)
+      if (isNewPB && (scoreData.score - prevBest) >= 3) {
+        window._newPbAnnounce = {
+          lift: scoreData.lift,
+          newScore: scoreData.score,
+          prevBest: prevBest,
+          improvement: scoreData.score - prevBest
+        };
+      } else if (isFirstCheckForLift && scoreData.score >= 70) {
+        window._newPbAnnounce = {
+          lift: scoreData.lift,
+          newScore: scoreData.score,
+          firstTime: true
+        };
+      }
+
       acct.history.push({
         score: scoreData.score,
         lift: scoreData.lift,
@@ -2434,20 +3736,164 @@ function updateNav(){
     }
     btn.innerHTML = `${avatarHtml} ${handle}`;
     btn.onclick = (e) => { e.preventDefault(); openAccountCenter(); };
+    document.body.classList.add('has-session');
+    renderDashboardHero();
   }else{
     btn.textContent='SIGN IN';
     btn.onclick=(e)=>{e.preventDefault();openAccount('signin');};
+    document.body.classList.remove('has-session');
   }
 }
 
+/* ============== DASHBOARD HERO RENDERER (logged-in only) ============== */
+function renderDashboardHero(){
+  if (!session) return;
+  const acct = getAccount(session.email) || {};
+  const history = acct.history || [];
+
+  // Name + time-of-day greeting
+  const name = (acct.handle || session.email.split('@')[0]).toUpperCase();
+  const nameEl = document.getElementById('dashName');
+  if (nameEl) nameEl.textContent = name;
+
+  const hour = new Date().getHours();
+  let greeting = 'GOOD EVENING';
+  if (hour < 12) greeting = 'GOOD MORNING';
+  else if (hour < 17) greeting = 'GOOD AFTERNOON';
+  else if (hour < 21) greeting = 'GOOD EVENING';
+  else greeting = 'BURNING THE MIDNIGHT OIL';
+  const timeEl = document.getElementById('dashTime');
+  if (timeEl) timeEl.textContent = greeting;
+
+  // Prompt copy varies based on activity
+  const promptEl = document.getElementById('dashPrompt');
+  if (promptEl) {
+    if (history.length === 0) {
+      promptEl.textContent = 'Drop your first clip and let\'s see what you\'re working with.';
+    } else if (history.length < 5) {
+      promptEl.textContent = 'Just getting started. Run a few more checks to start seeing trends.';
+    } else {
+      const lastDate = history[history.length - 1].date;
+      const daysAgo = Math.floor((Date.now() - lastDate) / 86400000);
+      if (daysAgo === 0) promptEl.textContent = 'Already lifted today. Another set?';
+      else if (daysAgo === 1) promptEl.textContent = 'Yesterday was a good one. Round two?';
+      else if (daysAgo <= 3) promptEl.textContent = `${daysAgo} days off. Get back in the gym.`;
+      else promptEl.textContent = `${daysAgo} days dark. Time to fix that.`;
+    }
+  }
+
+  // Stats
+  const totalChecks = history.length;
+  const scores = history.map(h => h.score).filter(s => typeof s === 'number');
+  const bestScore = scores.length ? Math.max(...scores) : null;
+  const streak = typeof computeStreak === 'function' ? computeStreak(history) : 0;
+  // This week's checks
+  const weekStart = new Date();
+  const day = weekStart.getDay();
+  const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+  weekStart.setDate(diff);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekChecks = history.filter(h => h.date >= weekStart.getTime()).length;
+
+  document.getElementById('dashStatChecks').textContent = totalChecks;
+  document.getElementById('dashStatBest').textContent = bestScore !== null ? bestScore : '—';
+  document.getElementById('dashStatStreak').textContent = streak;
+  document.getElementById('dashStatThisWeek').textContent = weekChecks;
+
+  // Right side: pick what to show
+  const latestCard = document.getElementById('dashLatestCard');
+  const weakCard = document.getElementById('dashWeakCard');
+  const emptyCard = document.getElementById('dashEmptyCard');
+  if (latestCard) latestCard.style.display = 'none';
+  if (weakCard) weakCard.style.display = 'none';
+  if (emptyCard) emptyCard.style.display = 'none';
+
+  if (history.length === 0) {
+    if (emptyCard) emptyCard.style.display = '';
+  } else {
+    // Show latest check
+    const latest = history[history.length - 1];
+    if (latestCard && latest) {
+      document.getElementById('dashLatestLift').textContent = latest.lift || '—';
+      document.getElementById('dashLatestScore').textContent = latest.score;
+      const grade = (latest.score >= 90) ? 'elite execution' :
+                    (latest.score >= 80) ? 'clean form' :
+                    (latest.score >= 70) ? 'solid, refine the details' :
+                    (latest.score >= 60) ? 'work in progress' :
+                    'needs focus';
+      document.getElementById('dashLatestGrade').textContent = grade;
+      const daysAgo = Math.floor((Date.now() - latest.date) / 86400000);
+      const dateLbl = daysAgo === 0 ? 'TODAY' : daysAgo === 1 ? 'YESTERDAY' : daysAgo + ' DAYS AGO';
+      document.getElementById('dashLatestDate').textContent = dateLbl;
+      latestCard.style.display = '';
+    }
+
+    // Also show weakness card if user has enough data
+    if (history.length >= 4 && weakCard) {
+      const byLift = {};
+      history.forEach(h => {
+        const l = h.lift || 'Unknown';
+        if (!byLift[l]) byLift[l] = { scores: [] };
+        if (typeof h.score === 'number') byLift[l].scores.push(h.score);
+      });
+      let weakName = null, weakAvg = Infinity, weakCount = 0;
+      for (const [n, d] of Object.entries(byLift)) {
+        if (d.scores.length < 2) continue;
+        const a = d.scores.reduce((x,y)=>x+y,0) / d.scores.length;
+        if (a < weakAvg) { weakAvg = a; weakName = n; weakCount = d.scores.length; }
+      }
+      if (weakName) {
+        document.getElementById('dashWeakLift').textContent = weakName.toUpperCase();
+        document.getElementById('dashWeakAvg').textContent = Math.round(weakAvg);
+        document.getElementById('dashWeakCount').textContent = weakCount;
+        weakCard.style.display = '';
+      }
+    }
+  }
+
+  // Bottom: mini challenges strip
+  renderDashChallengesStrip(acct, history);
+}
+
+function renderDashChallengesStrip(acct, history){
+  const strip = document.getElementById('dashChallengesStrip');
+  if (!strip) return;
+
+  // This week's history
+  const weekStart = new Date();
+  const day = weekStart.getDay();
+  const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+  weekStart.setDate(diff);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStartTs = weekStart.getTime();
+  const weekHistory = (history || []).filter(h => h.date >= weekStartTs);
+  const weekNum = Math.floor(weekStartTs / (1000 * 60 * 60 * 24 * 7));
+  const userGoal = typeof getCurrentGoal === 'function' ? getCurrentGoal() : 'hypertrophy';
+  if (typeof buildWeeklyChallenges !== 'function') {
+    strip.innerHTML = '';
+    return;
+  }
+  const challenges = buildWeeklyChallenges(weekHistory, weekNum, userGoal);
+
+  const items = challenges.map(c => {
+    const done = c.progress >= c.target;
+    return `<div class="dash-ch-mini">
+      <span class="dch-icon">${done ? '✓' : c.icon}</span>
+      <span class="dch-text"><b>${c.name}</b><span>${c.desc}</span></span>
+      <span class="dch-prog">${c.progress}/${c.target}</span>
+    </div>`;
+  }).join('');
+
+  strip.innerHTML = `<div class="dash-challenges-strip-title">⚔ THIS WEEK'S CHALLENGES</div>${items}`;
+}
+
 /* ============== ACCOUNT CENTER ============== */
-function openAccountCenter(){
+function openAccountCenter(initialTab){
   if (!session) return;
   document.getElementById('accountCenter').classList.add('show');
   document.body.style.overflow = 'hidden';
   populateAccountCenter();
-  // Default to overview tab
-  switchAcTab('overview');
+  switchAcTab(initialTab || 'overview');
 }
 
 function closeAccountCenter(){
@@ -2491,6 +3937,80 @@ function populateAccountCenter(){
   planBadge.className = 'ac-plan-badge ' + (session.plan || 'free');
   document.getElementById('acMemberSince').textContent = acct.createdAt ? formatJoinedAgo(acct.createdAt) : 'joined today';
 
+  // === Identity card ===
+  const idPhoto = document.getElementById('acIdPhoto');
+  if (idPhoto) {
+    if (acct.pfp) {
+      idPhoto.innerHTML = '<img src="' + acct.pfp + '" alt="" />';
+    } else {
+      idPhoto.innerHTML = '<span id="acIdEmoji">' + (acct.avatar || '🔥') + '</span>';
+    }
+  }
+  const idHandle = document.getElementById('acIdHandle');
+  if (idHandle) idHandle.textContent = (acct.handle || session.email.split('@')[0]).toUpperCase();
+  const idBio = document.getElementById('acIdBio');
+  if (idBio) {
+    if (acct.bio) {
+      idBio.textContent = acct.bio;
+      idBio.style.display = '';
+    } else {
+      idBio.textContent = 'Add a bio in Settings →';
+      idBio.style.opacity = '0.55';
+    }
+  }
+  const idTags = document.getElementById('acIdTags');
+  if (idTags) {
+    const tags = [];
+    if (acct.gym) tags.push('<span class="ac-id-tag">📍 ' + escapeHtml(acct.gym) + '</span>');
+    if (acct.weightUnit && acct.bodyweight) {
+      tags.push('<span class="ac-id-tag">⚖ ' + acct.bodyweight + ' ' + acct.weightUnit + '</span>');
+    }
+    const ucGoal = getCurrentGoal();
+    tags.push('<span class="ac-id-tag">' + (ucGoal === 'strength' ? '🏋 STRENGTH' : '💪 HYPERTROPHY') + '</span>');
+    const ucExp = getCurrentExp();
+    tags.push('<span class="ac-id-tag">' + ucExp.toUpperCase() + '</span>');
+    idTags.innerHTML = tags.join('');
+  }
+
+  // === Info bar ===
+  const bw = document.getElementById('acInfoBW');
+  if (bw) bw.textContent = acct.bodyweight ? acct.bodyweight + ' ' + (acct.weightUnit || 'lb') : '—';
+  const ih = document.getElementById('acInfoHeight');
+  if (ih) ih.textContent = acct.height || '—';
+  const ie = document.getElementById('acInfoExp');
+  if (ie) ie.textContent = getCurrentExp().toUpperCase();
+  const id_ = document.getElementById('acInfoDays');
+  if (id_) id_.textContent = getCurrentDays() + '×/WK';
+
+  // === Goal card ===
+  const ucGoalForCard = getCurrentGoal();
+  const goalEmoji = document.getElementById('acGoalEmoji');
+  if (goalEmoji) goalEmoji.textContent = ucGoalForCard === 'strength' ? '🏋' : '💪';
+  const goalVal = document.getElementById('acGoalCardVal');
+  if (goalVal) goalVal.textContent = ucGoalForCard === 'strength' ? 'STRENGTH' : 'HYPERTROPHY';
+  const goalQuote = document.getElementById('acGoalCardQuote');
+  if (goalQuote) {
+    if (acct.quote) {
+      goalQuote.textContent = acct.quote;
+      goalQuote.style.display = '';
+    } else {
+      goalQuote.textContent = '';
+      goalQuote.style.display = 'none';
+    }
+  }
+
+  // === Birthday banner ===
+  const birthdayEl = document.getElementById('acBirthdayBanner');
+  if (birthdayEl) {
+    if (isBirthdayWeek(acct.birthday)) {
+      birthdayEl.style.display = '';
+      const nm = document.getElementById('abbName');
+      if (nm) nm.textContent = (acct.handle || 'LIFTER').toUpperCase();
+    } else {
+      birthdayEl.style.display = 'none';
+    }
+  }
+
   // Stats
   const totalChecks = history.length;
   const thisMonthChecks = (acct.usage || {})[monthKey] || 0;
@@ -2506,6 +4026,18 @@ function populateAccountCenter(){
   document.getElementById('acStatAvg').textContent = avgScore !== null ? avgScore : '—';
   animateNumber(document.getElementById('acStatStreak'), streak);
   animateNumber(document.getElementById('acStatLifts'), uniqueLifts);
+
+  // === Streak rewards track ===
+  renderStreakTrack(streak);
+
+  // === Strength rank card ===
+  renderStrengthRank(bestScore);
+
+  // === Weakness Dashboard ===
+  renderWeaknessDashboard(history);
+
+  // === Weekly Challenges ===
+  renderChallenges(acct, history);
 
   // Plan card
   document.getElementById('acPlanName').textContent = planLabel;
@@ -3041,30 +4573,80 @@ function renderAcHistory(history){
 function renderAcLifts(history){
   const list = document.getElementById('acLiftsList');
   if (!history.length) {
-    list.innerHTML = '<div class="ac-empty">Once you have some checks logged, you\'ll see your progress by lift here.</div>';
+    list.innerHTML = '<div class="ac-empty">Once you have some checks logged, you\'ll see your progress by lift here. Drop a clip to start.</div>';
     return;
   }
   // Aggregate by lift
   const byLift = {};
   history.forEach(h => {
     const lift = h.lift || 'Unknown';
-    if (!byLift[lift]) byLift[lift] = { count: 0, best: 0, scores: [] };
+    if (!byLift[lift]) byLift[lift] = { count: 0, best: 0, scores: [], dates: [], bestDate: null };
     byLift[lift].count++;
     byLift[lift].scores.push(h.score);
-    byLift[lift].best = Math.max(byLift[lift].best, h.score);
+    byLift[lift].dates.push(h.date);
+    if (h.score > byLift[lift].best) {
+      byLift[lift].best = h.score;
+      byLift[lift].bestDate = h.date;
+    }
   });
+
   const sorted = Object.entries(byLift).sort((a, b) => b[1].count - a[1].count);
   list.innerHTML = '';
+
   sorted.forEach(([name, data]) => {
+    const avg = Math.round(data.scores.reduce((a,b) => a+b, 0) / data.scores.length);
+    // Trend: compare last 3 to first 3 (need at least 4 checks for trend)
+    let trendBadge = '';
+    if (data.scores.length >= 4) {
+      const firstThree = data.scores.slice(0, 3);
+      const lastThree = data.scores.slice(-3);
+      const startAvg = firstThree.reduce((a,b)=>a+b,0)/firstThree.length;
+      const endAvg = lastThree.reduce((a,b)=>a+b,0)/lastThree.length;
+      const diff = Math.round(endAvg - startAvg);
+      if (diff >= 3) trendBadge = '<span class="ac-lift-trend up">📈 +' + diff + '</span>';
+      else if (diff <= -3) trendBadge = '<span class="ac-lift-trend down">📉 ' + diff + '</span>';
+      else trendBadge = '<span class="ac-lift-trend flat">→ ±0</span>';
+    }
+
+    // Get strength rank tier for this lift's PB
+    const rank = getScoreRank(data.best);
+    const pbDateStr = data.bestDate ? formatRelativeTime(data.bestDate) : '';
+
     const row = document.createElement('div');
-    row.className = 'ac-lift-row';
+    row.className = 'ac-lift-row ac-lift-row-detailed';
     row.innerHTML = `
-      <div class="ac-lift-row-name">${name}</div>
-      <div class="ac-lift-row-count">${data.count}<span class="ac-lift-row-count-lbl">CHECKS</span></div>
-      <div class="ac-lift-row-best">${data.best}<span class="ac-lift-row-count-lbl">BEST</span></div>
+      <div class="ac-lift-row-main">
+        <div class="ac-lift-row-name">${escapeHtml(name)}</div>
+        <div class="ac-lift-row-meta">
+          <span class="alr-pill"><span class="alr-pill-num">${data.count}</span><span class="alr-pill-lbl">CHECKS</span></span>
+          <span class="alr-pill"><span class="alr-pill-num">${avg}</span><span class="alr-pill-lbl">AVG</span></span>
+          ${trendBadge}
+        </div>
+      </div>
+      <div class="ac-lift-row-pb">
+        <div class="alr-pb-rank" style="--rank-color:${rank.color}">${rank.icon}</div>
+        <div class="alr-pb-info">
+          <div class="alr-pb-score">${data.best} <span class="alr-pb-tier">${rank.name}</span></div>
+          <div class="alr-pb-lbl">PERSONAL BEST · ${pbDateStr}</div>
+        </div>
+      </div>
     `;
     list.appendChild(row);
   });
+}
+
+/* === SCORE RANK TIERS ===
+ * Translates a GYMcheck score (0-100) into a tier label.
+ * Used in By Lift list + future strength standards comparison.
+ */
+function getScoreRank(score){
+  if (score >= 95) return { name: 'TEXTBOOK',     icon: '⭐', color: '#d8ff00' };
+  if (score >= 90) return { name: 'ELITE',        icon: '👑', color: '#ff2d00' };
+  if (score >= 85) return { name: 'ADVANCED',     icon: '🔥', color: '#ff6f00' };
+  if (score >= 75) return { name: 'INTERMEDIATE', icon: '💪', color: '#a855f7' };
+  if (score >= 60) return { name: 'NOVICE',       icon: '⚡', color: '#00d4ff' };
+  if (score >= 40) return { name: 'BEGINNER',     icon: '🌱', color: '#10b981' };
+  return            { name: 'NEEDS WORK',    icon: '🔧', color: '#888888' };
 }
 
 // Achievement definitions
@@ -3222,6 +4804,342 @@ function computeStreak(history){
   const yesterday = new Date(Date.now() - 86400000).toDateString();
   if (days[0] !== today && days[0] !== yesterday) return 0;
   return streak;
+}
+
+/* === BIRTHDAY DETECTION ===
+ * Returns true if today is within ±3 days of the user's birthday.
+ * Birthday stored as "M/D" string (e.g. "3/15").
+ */
+function isBirthdayWeek(birthday){
+  if (!birthday) return false;
+  const m = birthday.match(/^(\d{1,2})\s*\/\s*(\d{1,2})$/);
+  if (!m) return false;
+  const month = parseInt(m[1]);
+  const day = parseInt(m[2]);
+  if (!month || !day || month < 1 || month > 12 || day < 1 || day > 31) return false;
+
+  const today = new Date();
+  const thisYear = today.getFullYear();
+  const bday = new Date(thisYear, month - 1, day);
+
+  const diffMs = Math.abs(today - bday);
+  const diffDays = diffMs / 86400000;
+  // Within ±3 days = "birthday week"
+  return diffDays <= 3.5;
+}
+
+/* === STREAK MILESTONES ===
+ * Defined milestones for the streak track on Overview.
+ * "Earned" if user's current streak >= milestone days.
+ * "Current" if user's streak is between this and next milestone.
+ */
+const STREAK_MILESTONES = [
+  { days: 3,   icon: '🔥', name: 'WARMUP' },
+  { days: 7,   icon: '💪', name: 'WEEK ONE' },
+  { days: 14,  icon: '⚡', name: 'TWO WEEKS' },
+  { days: 30,  icon: '🏆', name: 'ONE MONTH' },
+  { days: 60,  icon: '👑', name: 'TWO MONTHS' },
+  { days: 100, icon: '💎', name: 'CENTURY' },
+  { days: 200, icon: '🐉', name: 'DOUBLE TON' },
+  { days: 365, icon: '☠', name: 'ONE YEAR' },
+];
+
+function renderStreakTrack(currentStreak){
+  const track = document.getElementById('acStreakTrack');
+  const section = document.getElementById('acStreakSection');
+  if (!track || !section) return;
+
+  // Hide section if zero streak
+  if (currentStreak <= 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+
+  // Find the next milestone NOT yet earned
+  let nextIdx = STREAK_MILESTONES.findIndex(m => m.days > currentStreak);
+  if (nextIdx === -1) nextIdx = STREAK_MILESTONES.length - 1;
+
+  track.innerHTML = STREAK_MILESTONES.map((m, i) => {
+    const earned = currentStreak >= m.days;
+    const current = !earned && i === nextIdx;
+    const cls = earned ? 'earned' : (current ? 'current' : '');
+    return `<div class="ac-streak-milestone ${cls}">
+      <div class="asm-icon">${m.icon}</div>
+      <div class="asm-days">${m.days}</div>
+      <div class="asm-name">${m.name}</div>
+    </div>`;
+  }).join('');
+}
+
+/* === STRENGTH RANK CARD ===
+ * Translates user's best form-check score into a rank tier with
+ * positional meter showing where they fall (0-100 score range).
+ * Hidden until they have at least one check logged.
+ */
+function renderStrengthRank(bestScore){
+  const section = document.getElementById('acRankSection');
+  const card = document.getElementById('acRankCard');
+  const iconEl = document.getElementById('acRankIcon');
+  const nameEl = document.getElementById('acRankName');
+  const descEl = document.getElementById('acRankDesc');
+  const fillEl = document.getElementById('acRankMeterFill');
+  if (!section || !card) return;
+
+  if (bestScore === null || bestScore === undefined) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+
+  const rank = getScoreRank(bestScore);
+  // Friendly description per tier
+  const tierDesc = {
+    'TEXTBOOK':     'Untouchable form. You\'re the lifter the AI uses as the example.',
+    'ELITE':        'Pro-level execution. The AI is impressed (and that\'s rare).',
+    'ADVANCED':     'Tight, dialed-in form. Small tweaks unlock the next tier.',
+    'INTERMEDIATE': 'You\'re past the beginner pitfalls. Now refine the details.',
+    'NOVICE':       'Form basics are there. Keep dialing in cues + tempo.',
+    'BEGINNER':     'Just getting started. Every rep is a chance to improve.',
+    'NEEDS WORK':   'Several big issues to fix. Slow it down and focus on cues.'
+  };
+
+  iconEl.textContent = rank.icon;
+  nameEl.textContent = rank.name;
+  descEl.textContent = tierDesc[rank.name] || 'Keep at it.';
+
+  // Set color CSS variable for theming
+  card.style.setProperty('--rank-color', rank.color);
+  // Convert hex to translucent for glow
+  const glowMap = {
+    '#d8ff00': 'rgba(216,255,0,0.30)',
+    '#ff2d00': 'rgba(255,45,0,0.30)',
+    '#ff6f00': 'rgba(255,111,0,0.30)',
+    '#a855f7': 'rgba(168,85,247,0.30)',
+    '#00d4ff': 'rgba(0,212,255,0.30)',
+    '#10b981': 'rgba(16,185,129,0.30)',
+    '#888888': 'rgba(136,136,136,0.20)'
+  };
+  card.style.setProperty('--rank-glow', glowMap[rank.color] || 'rgba(255,45,0,0.30)');
+
+  // Animate meter fill from 0 to score%
+  if (fillEl) {
+    fillEl.style.width = '0%';
+    // Trigger CSS transition
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fillEl.style.width = bestScore + '%';
+      });
+    });
+  }
+}
+
+/* === WEAKNESS DASHBOARD ===
+ * Identifies the user's weakest lift (lowest avg score, min 2 checks)
+ * and surfaces it with a progress chart + suggested drill.
+ */
+function renderWeaknessDashboard(history){
+  const section = document.getElementById('acWeaknessSection');
+  if (!section) return;
+
+  if (!history || history.length < 2) {
+    section.style.display = 'none';
+    return;
+  }
+
+  // Aggregate by lift
+  const byLift = {};
+  history.forEach(h => {
+    const lift = h.lift || 'Unknown';
+    if (!byLift[lift]) byLift[lift] = { scores: [], dates: [] };
+    if (typeof h.score === 'number') {
+      byLift[lift].scores.push(h.score);
+      byLift[lift].dates.push(h.date);
+    }
+  });
+
+  // Find weakest (min 2 checks, lowest avg)
+  let weakest = null;
+  let weakestAvg = Infinity;
+  for (const [name, data] of Object.entries(byLift)) {
+    if (data.scores.length < 2) continue;
+    const avg = data.scores.reduce((a,b)=>a+b,0) / data.scores.length;
+    if (avg < weakestAvg) {
+      weakestAvg = avg;
+      weakest = { name, ...data };
+    }
+  }
+
+  if (!weakest) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+
+  // Populate
+  const avgScore = Math.round(weakestAvg);
+  document.getElementById('acWeakLift').textContent = weakest.name.toUpperCase();
+  document.getElementById('acWeakAvg').textContent = avgScore;
+  document.getElementById('acWeakCount').textContent = weakest.scores.length;
+
+  // Tag based on avg
+  const tagEl = document.getElementById('acWeakTag');
+  if (avgScore < 60) tagEl.textContent = 'NEEDS FOCUS';
+  else if (avgScore < 75) tagEl.textContent = 'WORK IN PROGRESS';
+  else tagEl.textContent = 'CLOSE TO BREAKTHROUGH';
+
+  // Trend (compare first half avg to last half avg)
+  const trendEl = document.getElementById('acWeakTrend');
+  const trendCell = document.getElementById('acWeakTrendCell');
+  if (weakest.scores.length >= 4) {
+    const half = Math.floor(weakest.scores.length / 2);
+    const earlier = weakest.scores.slice(0, half);
+    const recent = weakest.scores.slice(-half);
+    const earlierAvg = earlier.reduce((a,b)=>a+b,0)/earlier.length;
+    const recentAvg = recent.reduce((a,b)=>a+b,0)/recent.length;
+    const diff = Math.round(recentAvg - earlierAvg);
+    if (diff > 0) {
+      trendEl.textContent = '+' + diff;
+      trendEl.className = 'aw-stat-num up';
+    } else if (diff < 0) {
+      trendEl.textContent = diff;
+      trendEl.className = 'aw-stat-num down';
+    } else {
+      trendEl.textContent = '±0';
+      trendEl.className = 'aw-stat-num flat';
+    }
+  } else {
+    trendEl.textContent = '—';
+    trendEl.className = 'aw-stat-num flat';
+  }
+
+  // Progress bars (last 5)
+  const recent5 = weakest.scores.slice(-5);
+  const bars = document.getElementById('acWeakProgBars');
+  bars.innerHTML = recent5.map((score, i) => {
+    const isLatest = i === recent5.length - 1;
+    return `<div class="aw-prog-bar ${isLatest ? 'latest' : ''}" data-score="${score}" style="height:${Math.max(8, score)}%"></div>`;
+  }).join('');
+
+  // Drill suggestion based on lift name + score
+  const drillText = document.getElementById('acWeakDrillText');
+  drillText.innerHTML = getDrillSuggestion(weakest.name, avgScore);
+}
+
+/* Suggested drill text based on lift + score band */
+function getDrillSuggestion(liftName, avgScore){
+  const lower = liftName.toLowerCase();
+  const intensity = avgScore < 60 ? 'fundamentals' : avgScore < 75 ? 'refinement' : 'fine-tuning';
+
+  let drill = '';
+  if (lower.includes('squat')) {
+    drill = avgScore < 60
+      ? '<b>Pause squats at parallel</b> with 50-60% of your normal weight. 3 sets × 5 reps. Hold 3 seconds at the bottom. Focus on keeping knees out + chest tall.'
+      : avgScore < 75
+      ? '<b>Tempo squats</b> (3-1-1 cadence) at 70% intensity. Builds depth control + bar path consistency.'
+      : '<b>Box squats</b> with sub-parallel box. Confirms depth and reinforces hip drive on every rep.';
+  } else if (lower.includes('bench')) {
+    drill = avgScore < 60
+      ? '<b>Pause bench press</b> with a 2-second chest pause. 3 sets × 5 reps at moderate weight. Trains tightness + reset position.'
+      : avgScore < 75
+      ? '<b>Spoto press</b> (pause 1" off chest). Eliminates bouncing and forces strict bar path.'
+      : '<b>Slingshot bench</b> for overload + lockout drill. Maintains form quality at higher %s.';
+  } else if (lower.includes('dead')) {
+    drill = avgScore < 60
+      ? '<b>Deficit deadlifts</b> from a 1-2" platform. 3 sets × 3 reps light. Builds positioning + back tightness at setup.'
+      : avgScore < 75
+      ? '<b>Pause deadlifts</b> (1 sec below knee). Reinforces a tight, controlled pull off the floor.'
+      : '<b>Snatch-grip deadlifts</b>. Demands hip control + upper-back tightness — translates back to your main lift.';
+  } else if (lower.includes('press') || lower.includes('ohp')) {
+    drill = avgScore < 60
+      ? '<b>Pause OHP</b> at forehead height. 3 sets × 5 reps. Builds strict press path + core engagement.'
+      : '<b>Z-press</b> (seated on floor) at 60-70%. Eliminates leg drive and exposes weak shoulder positioning.';
+  } else if (lower.includes('row') || lower.includes('pull')) {
+    drill = avgScore < 75
+      ? '<b>Pause pulls</b> at peak contraction (1-2 sec hold). 3 sets × 8 reps. Builds mind-muscle on the back.'
+      : '<b>Tempo pulls</b> (3-second eccentric). Refines control + builds time-under-tension.';
+  } else {
+    drill = `Focus on slower, more deliberate reps. <b>3 sets × 6-8 reps at 60-70% intensity</b> with strict ${intensity}. Film every working set.`;
+  }
+
+  return drill;
+}
+
+/* === WEEKLY CHALLENGES ===
+ * Defines this week's challenges (rotates by date so they feel fresh).
+ * Progress comes from this week's history.
+ */
+function renderChallenges(acct, history){
+  const list = document.getElementById('acChallengeList');
+  if (!list) return;
+
+  // "This week" = current ISO week
+  const now = new Date();
+  const weekStart = new Date(now);
+  const day = weekStart.getDay();
+  const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+  weekStart.setDate(diff);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStartTs = weekStart.getTime();
+
+  const weekHistory = (history || []).filter(h => h.date >= weekStartTs);
+  const userGoal = typeof getCurrentGoal === 'function' ? getCurrentGoal() : 'hypertrophy';
+
+  // Build challenges. We rotate flavor based on week number so it doesn't feel static.
+  const weekNum = Math.floor(weekStartTs / (1000 * 60 * 60 * 24 * 7));
+  const challenges = buildWeeklyChallenges(weekHistory, weekNum, userGoal);
+
+  list.innerHTML = challenges.map(c => {
+    const pct = Math.min(100, Math.round((c.progress / c.target) * 100));
+    const done = c.progress >= c.target;
+    return `<div class="ac-challenge ${done ? 'complete' : ''}" style="--challenge-color:${c.color}">
+      <div class="ac-ch-icon">${c.icon}</div>
+      <div class="ac-ch-body">
+        <div class="ac-ch-name">${c.name}</div>
+        <div class="ac-ch-desc">${c.desc}</div>
+      </div>
+      <div class="ac-ch-progress">
+        <div class="ac-ch-prog-num">${c.progress}<span style="font-size:12px;color:var(--muted)">/${c.target}</span></div>
+        <div class="ac-ch-prog-lbl">${c.unit}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildWeeklyChallenges(weekHistory, weekNum, goal){
+  // Compute progress for each challenge type from week history
+  const totalChecks = weekHistory.length;
+  const uniqueLifts = new Set(weekHistory.map(h => h.lift)).size;
+  const scores80plus = weekHistory.filter(h => h.score >= 80).length;
+  const scores90plus = weekHistory.filter(h => h.score >= 90).length;
+  const big4 = ['Back Squat', 'Bench Press', 'Deadlift', 'Overhead Press'];
+  const big4Count = new Set(weekHistory.filter(h => big4.includes(h.lift)).map(h => h.lift)).size;
+
+  // 3 rotating challenges based on weekNum % 3 — keeps them feeling fresh
+  const rotation = weekNum % 3;
+
+  const all = [
+    // Set 0
+    [
+      { name: 'CHECK STREAK',     icon: '🔥', desc: 'Run 3 form checks this week',           progress: Math.min(totalChecks, 3),    target: 3, unit: 'CHECKS',   color: '#ff2d00' },
+      { name: 'BIG 4 CRUSHER',    icon: '🏋', desc: 'Hit all 4 of the Big 4 lifts',            progress: big4Count,                   target: 4, unit: 'LIFTS',    color: '#d8ff00' },
+      { name: 'CLEAN FORM',       icon: '⭐', desc: 'Score 80+ on any 2 lifts',                progress: Math.min(scores80plus, 2),   target: 2, unit: 'CHECKS',   color: '#00d4ff' }
+    ],
+    // Set 1
+    [
+      { name: 'VARIETY HOUR',     icon: '🗺',  desc: 'Try 4 different lifts this week',        progress: Math.min(uniqueLifts, 4),    target: 4, unit: 'LIFTS',    color: '#a855f7' },
+      { name: 'GET CONSISTENT',   icon: '💪', desc: 'Run 5 form checks this week',             progress: Math.min(totalChecks, 5),    target: 5, unit: 'CHECKS',   color: '#ff2d00' },
+      { name: 'ELITE EXECUTION',  icon: '👑', desc: 'Score 90+ on any lift',                   progress: Math.min(scores90plus, 1),   target: 1, unit: 'CHECKS',   color: '#d8ff00' }
+    ],
+    // Set 2
+    [
+      { name: 'POWER WEEK',       icon: '⚡', desc: 'Hit 6 form checks this week',             progress: Math.min(totalChecks, 6),    target: 6, unit: 'CHECKS',   color: '#ff6f00' },
+      { name: 'CONSISTENT 80s',   icon: '🎯', desc: 'Score 80+ on 3 different lifts',          progress: Math.min(scores80plus, 3),   target: 3, unit: 'LIFTS',    color: '#00d4ff' },
+      { name: 'BIG MOVERS',       icon: '🔨', desc: 'Train all Big 4 lifts',                   progress: big4Count,                   target: 4, unit: 'LIFTS',    color: '#d8ff00' }
+    ]
+  ];
+
+  return all[rotation];
 }
 
 function formatJoinedAgo(ts){
@@ -3963,6 +5881,32 @@ function renderResult(r){
   });
 
   document.getElementById('result').classList.add('show');
+
+  // === SHOW PB BANNER if there's one to celebrate ===
+  const pbBanner = document.getElementById('pbBanner');
+  if (pbBanner) {
+    const pb = window._newPbAnnounce;
+    if (pb) {
+      const eyebrow = document.getElementById('pbBannerEyebrow');
+      const headline = document.getElementById('pbBannerHeadline');
+      const meta = document.getElementById('pbBannerMeta');
+      if (pb.firstTime) {
+        eyebrow.textContent = 'FIRST LIFT LOCKED IN';
+        headline.textContent = pb.lift.toUpperCase();
+        meta.innerHTML = `Scored <b>${pb.newScore}</b> on your first try. Solid start.`;
+      } else {
+        eyebrow.textContent = 'NEW PERSONAL BEST';
+        headline.textContent = pb.lift.toUpperCase();
+        meta.innerHTML = `Beat your previous best of <b>${pb.prevBest}</b> by <b>+${pb.improvement}</b> points. Keep cooking.`;
+      }
+      pbBanner.style.display = '';
+      // Clear so it doesn't fire on next view
+      window._newPbAnnounce = null;
+    } else {
+      pbBanner.style.display = 'none';
+    }
+  }
+
   setTimeout(()=>document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
