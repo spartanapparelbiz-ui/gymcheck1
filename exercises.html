@@ -248,6 +248,76 @@ body::before{
   .phase-controls-3d .phase-label{font-size:11px;min-width:80px}
 }
 
+/* ===== BODY DIAGRAM VIEWER (replaces phase animation) ===== */
+.body-viewer-wrap{
+  margin-bottom:32px;
+  background:#0a0a0a;
+  padding:0;
+  border:2px solid var(--ink);
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 12px 32px rgba(0,0,0,0.18);
+}
+.body-viewer-wrap::before{
+  content:"MUSCLE ACTIVATION";
+  position:absolute;top:14px;right:18px;
+  font-family:'Anton',sans-serif;font-size:10px;letter-spacing:0.26em;
+  color:rgba(255,45,0,0.7);z-index:5;pointer-events:none;
+}
+.body-viewer{
+  padding:30px 0 10px;
+  position:relative;
+}
+.body-diagram-svg{
+  width:100%;
+  max-width:520px;
+  height:auto;
+  display:block;
+  margin:0 auto;
+}
+.body-diagram-svg path{
+  transition:fill 0.4s ease, filter 0.4s ease;
+}
+.body-figure path[fill="#ff2d00"]{
+  filter:drop-shadow(0 0 8px rgba(255,45,0,0.5));
+}
+.body-figure path[fill="#ff6f00"]{
+  filter:drop-shadow(0 0 6px rgba(255,111,0,0.4));
+}
+.body-viewer-legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  align-items:center;
+  justify-content:center;
+  padding:12px 14px;
+  background:#000;
+  border-top:1px solid #222;
+}
+.bvl-dot{
+  display:inline-block;
+  width:12px;height:12px;
+  border-radius:50%;
+  margin-right:6px;
+  vertical-align:middle;
+}
+.bvl-lbl{
+  font-family:'Anton',sans-serif;
+  font-size:10px;
+  letter-spacing:0.14em;
+  color:#aaa;
+  text-transform:uppercase;
+  margin-right:6px;
+  vertical-align:middle;
+}
+@media (max-width:600px){
+  .body-viewer-wrap::before{font-size:8px;letter-spacing:0.2em;top:10px;right:12px}
+  .body-viewer{padding:24px 0 8px}
+  .body-viewer-legend{padding:10px;gap:8px}
+  .bvl-lbl{font-size:8px}
+  .bvl-dot{width:10px;height:10px;margin-right:4px}
+}
+
 .phase-viewer-wrap{margin-bottom:32px;background:var(--ink);padding:0;border:2px solid var(--ink);overflow:hidden;position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.9,.3,1), box-shadow .45s ease;will-change:transform;box-shadow:0 12px 32px rgba(0,0,0,0.18)}
 .phase-viewer-wrap:hover{transform:perspective(1200px) translateY(-4px) rotateX(2deg);box-shadow:0 28px 56px rgba(0,0,0,0.3), 0 0 60px rgba(255,45,0,0.15)}
 .phase-viewer-wrap::before{content:"GYMcheck™ MOTION ANALYSIS";position:absolute;top:10px;right:14px;font-family:'Anton',sans-serif;font-size:9px;letter-spacing:0.24em;color:rgba(255,45,0,0.7);z-index:5;mix-blend-mode:screen}
@@ -408,13 +478,6 @@ body::before{
   .rs-num{font-size:15px}
 }
 </style>
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-  }
-}
-</script>
 </head>
 <body>
 
@@ -1852,6 +1915,207 @@ document.addEventListener('click', e => {
   }
 });
 
+// === ANATOMICAL BODY DIAGRAM ===
+// Builds a clean front+back anatomical SVG with muscles highlighted by intensity.
+// Takes the exercise's research data and lights up the right muscles in red.
+
+const MUSCLE_PATHS = {
+  // Front view (left half of canvas, body facing forward)
+  front: {
+    // Head
+    head:        'M 100,30 Q 88,30 88,42 Q 88,55 100,58 Q 112,55 112,42 Q 112,30 100,30 Z',
+    // Neck/traps front
+    neck:        'M 90,58 L 110,58 L 113,72 L 87,72 Z',
+    // Chest (pecs) — two ovals
+    chest_l:     'M 92,72 Q 70,75 68,95 Q 70,105 92,103 L 99,90 Z',
+    chest_r:     'M 108,72 Q 130,75 132,95 Q 130,105 108,103 L 101,90 Z',
+    // Front delts
+    shoulder_l:  'M 70,72 Q 60,73 56,86 Q 58,95 68,92 L 72,84 Z',
+    shoulder_r:  'M 130,72 Q 140,73 144,86 Q 142,95 132,92 L 128,84 Z',
+    // Biceps
+    bicep_l:     'M 56,87 Q 50,95 48,115 Q 52,128 60,128 Q 62,115 62,98 Z',
+    bicep_r:     'M 144,87 Q 150,95 152,115 Q 148,128 140,128 Q 138,115 138,98 Z',
+    // Forearms
+    forearm_l:   'M 48,128 Q 44,140 44,160 Q 50,168 58,166 Q 60,148 60,130 Z',
+    forearm_r:   'M 152,128 Q 156,140 156,160 Q 150,168 142,166 Q 140,148 140,130 Z',
+    // Abs (rectus abdominis)
+    abs:         'M 88,105 L 112,105 L 112,150 Q 100,153 88,150 Z',
+    // Obliques (sides)
+    obliques_l:  'M 86,107 Q 76,118 78,140 Q 84,148 88,148 L 88,105 Z',
+    obliques_r:  'M 114,107 Q 124,118 122,140 Q 116,148 112,148 L 112,105 Z',
+    // Quads
+    quad_l:      'M 86,150 Q 76,165 78,210 Q 88,220 96,215 L 100,158 Z',
+    quad_r:      'M 114,150 Q 124,165 122,210 Q 112,220 104,215 L 100,158 Z',
+    // Adductors
+    adductor:    'M 96,150 L 104,150 L 102,200 L 98,200 Z',
+    // Calves front (shins / tibialis)
+    shin_l:      'M 82,220 Q 78,240 80,260 L 92,260 L 94,220 Z',
+    shin_r:      'M 118,220 Q 122,240 120,260 L 108,260 L 106,220 Z',
+  },
+  // Back view (right half of canvas, body facing away)
+  back: {
+    head:        'M 300,30 Q 288,30 288,42 Q 288,55 300,58 Q 312,55 312,42 Q 312,30 300,30 Z',
+    // Traps (upper back)
+    traps:       'M 282,58 L 318,58 L 326,82 L 274,82 Z',
+    // Rear delts
+    rear_delt_l: 'M 270,72 Q 258,75 256,90 Q 262,98 274,95 L 276,82 Z',
+    rear_delt_r: 'M 330,72 Q 342,75 344,90 Q 338,98 326,95 L 324,82 Z',
+    // Lats (big back muscles, V shape)
+    lats_l:      'M 274,82 L 280,100 Q 268,108 268,135 L 290,140 L 290,90 Z',
+    lats_r:      'M 326,82 L 320,100 Q 332,108 332,135 L 310,140 L 310,90 Z',
+    // Mid back / rhomboids
+    midback:     'M 290,82 L 310,82 L 310,140 L 290,140 Z',
+    // Triceps
+    tricep_l:    'M 256,90 Q 250,100 248,125 Q 254,130 262,128 Q 264,110 264,95 Z',
+    tricep_r:    'M 344,90 Q 350,100 352,125 Q 346,130 338,128 Q 336,110 336,95 Z',
+    // Forearms back
+    forearm_l:   'M 248,128 Q 244,140 244,160 Q 250,168 258,166 Q 260,148 260,130 Z',
+    forearm_r:   'M 352,128 Q 356,140 356,160 Q 350,168 342,166 Q 340,148 340,130 Z',
+    // Lower back
+    lower_back:  'M 285,140 L 315,140 L 313,160 L 287,160 Z',
+    // Glutes
+    glute_l:     'M 282,158 Q 272,172 276,195 Q 290,200 296,195 L 300,160 Z',
+    glute_r:     'M 318,158 Q 328,172 324,195 Q 310,200 304,195 L 300,160 Z',
+    // Hamstrings
+    ham_l:       'M 282,195 Q 276,210 282,235 Q 290,240 296,235 L 300,200 Z',
+    ham_r:       'M 318,195 Q 324,210 318,235 Q 310,240 304,235 L 300,200 Z',
+    // Calves back
+    calf_l:      'M 282,240 Q 280,255 286,275 L 296,275 L 296,240 Z',
+    calf_r:      'M 318,240 Q 320,255 314,275 L 304,275 L 304,240 Z',
+  }
+};
+
+// Map muscle names (from research data) to the body parts they should highlight
+const MUSCLE_MAP = {
+  // Lower body
+  'quads':         { front: ['quad_l', 'quad_r'], back: [] },
+  'quadriceps':    { front: ['quad_l', 'quad_r'], back: [] },
+  'glutes':        { front: [], back: ['glute_l', 'glute_r'] },
+  'hamstrings':    { front: [], back: ['ham_l', 'ham_r'] },
+  'calves':        { front: ['shin_l', 'shin_r'], back: ['calf_l', 'calf_r'] },
+  'adductors':     { front: ['adductor'], back: [] },
+
+  // Posterior chain
+  'posterior chain': { front: [], back: ['glute_l','glute_r','ham_l','ham_r','lower_back'] },
+  'lower back':    { front: [], back: ['lower_back'] },
+  'erectors':      { front: [], back: ['lower_back'] },
+
+  // Upper back / pulling
+  'lats':          { front: [], back: ['lats_l', 'lats_r'] },
+  'back':          { front: [], back: ['lats_l', 'lats_r', 'midback', 'rear_delt_l', 'rear_delt_r'] },
+  'upper back':    { front: [], back: ['midback', 'rear_delt_l', 'rear_delt_r'] },
+  'mid back':      { front: [], back: ['midback'] },
+  'rhomboids':     { front: [], back: ['midback'] },
+  'traps':         { front: ['neck'], back: ['traps'] },
+  'rear delts':    { front: [], back: ['rear_delt_l', 'rear_delt_r'] },
+
+  // Chest / press
+  'chest':         { front: ['chest_l', 'chest_r'], back: [] },
+  'pecs':          { front: ['chest_l', 'chest_r'], back: [] },
+
+  // Shoulders / press
+  'shoulders':     { front: ['shoulder_l', 'shoulder_r'], back: ['rear_delt_l', 'rear_delt_r'] },
+  'front delts':   { front: ['shoulder_l', 'shoulder_r'], back: [] },
+  'delts':         { front: ['shoulder_l', 'shoulder_r'], back: ['rear_delt_l', 'rear_delt_r'] },
+
+  // Arms
+  'biceps':        { front: ['bicep_l', 'bicep_r'], back: [] },
+  'triceps':       { front: [], back: ['tricep_l', 'tricep_r'] },
+  'forearms':      { front: ['forearm_l', 'forearm_r'], back: ['forearm_l', 'forearm_r'] },
+  'grip':          { front: ['forearm_l', 'forearm_r'], back: ['forearm_l', 'forearm_r'] },
+
+  // Core
+  'core':          { front: ['abs', 'obliques_l', 'obliques_r'], back: [] },
+  'abs':           { front: ['abs'], back: [] },
+  'obliques':      { front: ['obliques_l', 'obliques_r'], back: [] },
+
+  // Generic
+  'full body':     { front: ['chest_l','chest_r','abs','quad_l','quad_r','bicep_l','bicep_r','shoulder_l','shoulder_r'], back: ['lats_l','lats_r','glute_l','glute_r','ham_l','ham_r','calf_l','calf_r','traps'] },
+};
+
+function resolveMuscleParts(muscleName){
+  if (!muscleName) return { front: [], back: [] };
+  const key = muscleName.toLowerCase().trim();
+  if (MUSCLE_MAP[key]) return MUSCLE_MAP[key];
+  // Try partial match
+  for (const [k, v] of Object.entries(MUSCLE_MAP)) {
+    if (key.includes(k) || k.includes(key)) return v;
+  }
+  return { front: [], back: [] };
+}
+
+function getActivationColor(activation){
+  // Activation 0-100 → red intensity
+  if (activation >= 85) return '#ff2d00';        // primary: full accent red
+  if (activation >= 70) return '#ff6f00';        // strong: orange
+  if (activation >= 55) return '#ffa500';        // secondary: amber
+  return '#ffcc66';                              // stabilizer: pale
+}
+
+function buildBodyDiagram(research){
+  // Build set of muscle → activation
+  const activations = {};
+  if (research && research.primary) {
+    activations[research.primary.muscle.toLowerCase()] = research.primary.activation;
+  }
+  if (research && research.secondary) {
+    research.secondary.forEach(s => {
+      activations[s.muscle.toLowerCase()] = s.activation;
+    });
+  }
+
+  // Resolve all muscles to body parts
+  const partFills = {}; // part name → color
+  for (const [muscleName, act] of Object.entries(activations)) {
+    const parts = resolveMuscleParts(muscleName);
+    const color = getActivationColor(act);
+    parts.front.forEach(p => {
+      if (!partFills['front:' + p] || act > 80) partFills['front:' + p] = color;
+    });
+    parts.back.forEach(p => {
+      if (!partFills['back:' + p] || act > 80) partFills['back:' + p] = color;
+    });
+  }
+
+  // Build the SVG. Two figures: front + back side by side
+  // Viewbox 400x320 (200 per figure)
+  const muted = '#3a3a3a';  // unactivated muscle
+  const outline = '#666';
+
+  let frontSvg = '';
+  for (const [name, path] of Object.entries(MUSCLE_PATHS.front)) {
+    const fill = partFills['front:' + name] || muted;
+    frontSvg += `<path d="${path}" fill="${fill}" stroke="${outline}" stroke-width="0.8" />`;
+  }
+  let backSvg = '';
+  for (const [name, path] of Object.entries(MUSCLE_PATHS.back)) {
+    const fill = partFills['back:' + name] || muted;
+    backSvg += `<path d="${path}" fill="${fill}" stroke="${outline}" stroke-width="0.8" />`;
+  }
+
+  return `<svg viewBox="0 0 400 290" xmlns="http://www.w3.org/2000/svg" class="body-diagram-svg">
+    <defs>
+      <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#1a1a1a"/>
+        <stop offset="1" stop-color="#0a0a0a"/>
+      </linearGradient>
+    </defs>
+    <rect width="400" height="290" fill="url(#bgGrad)" />
+    <!-- Front -->
+    <g class="body-figure body-front">
+      ${frontSvg}
+    </g>
+    <!-- Back -->
+    <g class="body-figure body-back">
+      ${backSvg}
+    </g>
+    <!-- Labels -->
+    <text x="100" y="285" fill="#ff2d00" font-family="Anton, sans-serif" font-size="11" letter-spacing="2" text-anchor="middle">FRONT</text>
+    <text x="300" y="285" fill="#ff2d00" font-family="Anton, sans-serif" font-size="11" letter-spacing="2" text-anchor="middle">BACK</text>
+  </svg>`;
+}
+
+
 let activeCat = 'all';
 let activeSearch = '';
 
@@ -1916,16 +2180,6 @@ function clearExSearch(){
 
 // DETAIL PANEL
 let currentEx = null;
-// Detect lifts that have a 3D animation built
-function get3DLiftType(ex){
-  const name = ex.name.toLowerCase();
-  if (name === 'back squat') return 'squat';
-  if (name === 'bench press') return 'bench';
-  if (name === 'deadlift') return 'deadlift';
-  if (name === 'overhead press') return 'ohp';
-  return null;
-}
-
 function openDetail(ex){
   currentEx = ex;
   window.currentEx = ex;
@@ -1933,54 +2187,35 @@ function openDetail(ex){
   document.getElementById('detailName').textContent = ex.name;
   document.getElementById('detailCtaName').textContent = ex.short;
 
-  // Decide viewer type: 3D for Big 4, SVG fallback for others
-  const lift3D = get3DLiftType(ex);
   const youtubeQuery = encodeURIComponent(ex.name + ' proper form tutorial');
 
-  let viewerHTML;
-  if (lift3D) {
-    // 3D viewer — self-paced scrubber, play/pause, phase indicator
-    viewerHTML = `
-      <div class="phase-viewer-wrap is-3d">
-        <div class="phase-viewer phase-viewer-3d" id="phaseViewer">
-          <div class="threed-canvas-host" id="threedHost"></div>
-          <div class="threed-badge">3D · ${lift3D.toUpperCase()}</div>
-        </div>
-        <div class="phase-controls phase-controls-3d">
-          <button class="phase-play-btn" id="phasePlayBtn" aria-label="Play / pause">▶</button>
-          <input type="range" class="phase-scrub" id="phaseScrub" min="0" max="1000" value="0" step="1" />
-          <div class="phase-label" id="phaseLabel">SETUP</div>
-        </div>
-        <a href="https://www.youtube.com/results?search_query=${youtubeQuery}" target="_blank" rel="noopener" class="phase-video-btn">
-          <span class="pv-icon">▶</span>
-          <span>WATCH ON YOUTUBE</span>
-          <span class="pv-arrow">→</span>
-        </a>
+  // Body diagram viewer — shows which muscles work for this lift
+  const research = getResearchFor(ex);
+  const bodyDiagram = buildBodyDiagram(research);
+  const viewerHTML = `
+    <div class="body-viewer-wrap">
+      <div class="body-viewer">
+        ${bodyDiagram}
       </div>
-    `;
-  } else {
-    // SVG fallback — keep existing system
-    const phaseSvg = buildPhaseAnimation(ex);
-    viewerHTML = `
-      <div class="phase-viewer-wrap">
-        <div class="phase-viewer" id="phaseViewer">
-          ${phaseSvg}
-        </div>
-        <div class="phase-controls">
-          <div class="phase-dots" id="phaseDots"></div>
-          <div class="phase-label" id="phaseLabel">PHASE 1: SETUP</div>
-        </div>
-        <a href="https://www.youtube.com/results?search_query=${youtubeQuery}" target="_blank" rel="noopener" class="phase-video-btn">
-          <span class="pv-icon">▶</span>
-          <span>WATCH ON YOUTUBE</span>
-          <span class="pv-arrow">→</span>
-        </a>
+      <div class="body-viewer-legend">
+        <span class="bvl-dot" style="background:#ff2d00"></span>
+        <span class="bvl-lbl">PRIMARY</span>
+        <span class="bvl-dot" style="background:#ff6f00"></span>
+        <span class="bvl-lbl">STRONG</span>
+        <span class="bvl-dot" style="background:#ffa500"></span>
+        <span class="bvl-lbl">SECONDARY</span>
+        <span class="bvl-dot" style="background:#3a3a3a"></span>
+        <span class="bvl-lbl">REST</span>
       </div>
-    `;
-  }
+      <a href="https://www.youtube.com/results?search_query=${youtubeQuery}" target="_blank" rel="noopener" class="phase-video-btn">
+        <span class="pv-icon">▶</span>
+        <span>WATCH ON YOUTUBE</span>
+        <span class="pv-arrow">→</span>
+      </a>
+    </div>
+  `;
 
   const body = document.getElementById('detailBody');
-  const research = getResearchFor(ex);
   const userGoal = getUserGoal();
   body.innerHTML = viewerHTML + `
     <div class="detail-section">
@@ -2036,867 +2271,9 @@ function openDetail(ex){
   document.getElementById('detailOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  // Start animation — 3D for Big 4, SVG for everything else
-  const lift3DType = get3DLiftType(ex);
-  if (lift3DType) {
-    init3DAnimation(lift3DType);
-  } else {
-    initPhaseAnimation(ex);
-  }
-
   // Update URL hash
   history.replaceState(null, '', '#' + ex.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 }
-
-/* ============== PHASE ANIMATION SYSTEM ============== */
-// Each exercise gets 4 SVG frames representing the phases of the lift.
-// We pick the right frames based on the exercise category + name.
-
-function buildPhaseAnimation(ex){
-  const frames = getPhaseFramesForExercise(ex);
-  return `
-    <svg class="phase-svg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#1a1a1a"/>
-          <stop offset="1" stop-color="#0d0d0d"/>
-        </linearGradient>
-        <pattern id="floorPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-          <rect width="20" height="20" fill="#0a0a0a"/>
-          <line x1="0" y1="0" x2="20" y2="0" stroke="#222" stroke-width="0.5"/>
-          <line x1="0" y1="0" x2="0" y2="20" stroke="#222" stroke-width="0.5"/>
-        </pattern>
-      </defs>
-      <rect width="200" height="240" fill="url(#bgGrad)"/>
-      <rect x="0" y="200" width="200" height="40" fill="url(#floorPattern)"/>
-      ${frames.map((frame, i) => `
-        <g class="phase-frame" data-frame="${i}" opacity="${i === 0 ? 1 : 0}">
-          ${frame.svg}
-        </g>
-      `).join('')}
-    </svg>
-  `;
-}
-
-function initPhaseAnimation(ex){
-  const viewer = document.getElementById('phaseViewer');
-  const dotsEl = document.getElementById('phaseDots');
-  const labelEl = document.getElementById('phaseLabel');
-  if (!viewer || !dotsEl || !labelEl) return;
-
-  const frames = getPhaseFramesForExercise(ex);
-
-  // Build dot navigation
-  dotsEl.innerHTML = frames.map((f, i) => `<button class="phase-dot${i === 0 ? ' active' : ''}" data-i="${i}" aria-label="Phase ${i+1}"></button>`).join('');
-
-  let currentFrame = 0;
-  let timer = null;
-
-  function showFrame(i){
-    const frameEls = viewer.querySelectorAll('.phase-frame');
-    frameEls.forEach((el, idx) => {
-      el.setAttribute('opacity', idx === i ? '1' : '0');
-    });
-    dotsEl.querySelectorAll('.phase-dot').forEach((d, idx) => {
-      d.classList.toggle('active', idx === i);
-    });
-    labelEl.textContent = `PHASE ${i+1}: ${frames[i].label}`;
-    currentFrame = i;
-  }
-
-  function nextFrame(){
-    showFrame((currentFrame + 1) % frames.length);
-  }
-
-  // Auto-cycle every 1.6s
-  timer = setInterval(nextFrame, 1600);
-
-  // Click dots to jump
-  dotsEl.querySelectorAll('.phase-dot').forEach(dot => {
-    dot.addEventListener('click', () => {
-      clearInterval(timer);
-      showFrame(parseInt(dot.dataset.i));
-      // Resume after 4s of inactivity
-      setTimeout(() => {
-        timer = setInterval(nextFrame, 1600);
-      }, 4000);
-    });
-  });
-
-  // Cleanup when panel closes
-  window._currentPhaseTimer = timer;
-}
-
-// Stop animation when closing panel
-const origCloseDetail = window.closeDetail;
-window.closeDetail = function(){
-  if (window._currentPhaseTimer) clearInterval(window._currentPhaseTimer);
-  destroy3DAnimation();
-  if (origCloseDetail) origCloseDetail.apply(this, arguments);
-};
-
-// === FRAME DEFINITIONS ===
-// Generic stick-figure phases per movement category.
-// All figures use accent color for the active limb.
-
-// FIG_COLORS must be declared BEFORE FRAMES_LIB since frame builders use it
-const FIG_COLORS = {
-  body: '#e8e8e8',
-  bodyShade: '#c4c4c4',
-  active: '#ff2d00',
-  activeShade: '#cc2400',
-  bar: '#1a1a1a',
-  plate: '#0a0a0a',
-  bench: '#2a2a2a',
-  benchTop: '#3a3a3a',
-};
-
-const FRAMES_LIB = {
-  squat: [
-    { label: 'STAND TALL', svg: stickFigure({ stance: 'stand', barOnBack: true }) },
-    { label: 'DESCENT', svg: stickFigure({ stance: 'halfSquat', barOnBack: true }) },
-    { label: 'BOTTOM', svg: stickFigure({ stance: 'deepSquat', barOnBack: true }) },
-    { label: 'DRIVE UP', svg: stickFigure({ stance: 'halfSquat', barOnBack: true, driveUp: true }) },
-  ],
-  bench: [
-    { label: 'UNRACK', svg: benchFigure({ phase: 'unrack' }) },
-    { label: 'LOWER', svg: benchFigure({ phase: 'lower' }) },
-    { label: 'TOUCH CHEST', svg: benchFigure({ phase: 'touch' }) },
-    { label: 'PRESS UP', svg: benchFigure({ phase: 'press' }) },
-  ],
-  deadlift: [
-    { label: 'SETUP', svg: stickFigure({ stance: 'setup', barOnFloor: true }) },
-    { label: 'LIFT OFF', svg: stickFigure({ stance: 'liftOff', barOnFloor: true }) },
-    { label: 'PAST KNEES', svg: stickFigure({ stance: 'pastKnees', barOnFloor: false, barAtHip: true }) },
-    { label: 'LOCKOUT', svg: stickFigure({ stance: 'lockout', barOnFloor: false, barAtHip: true }) },
-  ],
-  press: [
-    { label: 'RACK POSITION', svg: pressFigure({ phase: 'rack' }) },
-    { label: 'DRIVE UP', svg: pressFigure({ phase: 'drive' }) },
-    { label: 'OVERHEAD', svg: pressFigure({ phase: 'overhead' }) },
-    { label: 'LOWER', svg: pressFigure({ phase: 'lower' }) },
-  ],
-  pull: [
-    { label: 'HANG / SETUP', svg: pullFigure({ phase: 'hang' }) },
-    { label: 'PULL', svg: pullFigure({ phase: 'pull' }) },
-    { label: 'TOP', svg: pullFigure({ phase: 'top' }) },
-    { label: 'LOWER', svg: pullFigure({ phase: 'lower' }) },
-  ],
-  hinge: [
-    { label: 'STAND TALL', svg: stickFigure({ stance: 'stand', barAtHip: true }) },
-    { label: 'HIPS BACK', svg: stickFigure({ stance: 'hinge', barAtHip: true }) },
-    { label: 'STRETCH', svg: stickFigure({ stance: 'deepHinge', barAtHip: true }) },
-    { label: 'DRIVE HIPS', svg: stickFigure({ stance: 'hinge', barAtHip: true, driveUp: true }) },
-  ],
-  core: [
-    { label: 'START', svg: coreFigure({ phase: 'start' }) },
-    { label: 'CONTRACT', svg: coreFigure({ phase: 'contract' }) },
-    { label: 'HOLD', svg: coreFigure({ phase: 'hold' }) },
-    { label: 'RETURN', svg: coreFigure({ phase: 'return' }) },
-  ],
-  explosive: [
-    { label: 'LOAD', svg: stickFigure({ stance: 'halfSquat' }) },
-    { label: 'EXPLODE', svg: stickFigure({ stance: 'jump' }) },
-    { label: 'CATCH', svg: stickFigure({ stance: 'halfSquat', barOverhead: true }) },
-    { label: 'STAND', svg: stickFigure({ stance: 'stand', barOverhead: true }) },
-  ],
-};
-
-function getPhaseFramesForExercise(ex){
-  const name = ex.name.toLowerCase();
-  // Specific matches
-  if (name.includes('snatch') || name.includes('clean') || name.includes('jerk') || name.includes('jump') || name.includes('thruster') || name.includes('high pull')) return FRAMES_LIB.explosive;
-  if (name.includes('plank') || name.includes('crunch') || name.includes('rollout') || name.includes('twist') || name.includes('leg raise') || name.includes('pallof') || name.includes('flag') || name.includes('l-sit') || name.includes('dead bug') || name.includes('bird dog')) return FRAMES_LIB.core;
-  if (name.includes('deadlift') || name === 'rdl' || name.includes('romanian') || name.includes('stiff-leg') || name.includes('good morning') || name.includes('rack pull') || name.includes('hip thrust') || name.includes('glute bridge')) return name.includes('rdl') || name.includes('romanian') || name.includes('good morning') || name.includes('stiff-leg') ? FRAMES_LIB.hinge : FRAMES_LIB.deadlift;
-  if (name.includes('pull-up') || name.includes('chin-up') || name.includes('row') || name.includes('pulldown') || name.includes('curl') || name.includes('face pull') || name.includes('shrug') || name.includes('pullover')) return FRAMES_LIB.pull;
-  if (name.includes('bench') || name.includes('fly') || name.includes('push-up') || name.includes('dip')) return FRAMES_LIB.bench;
-  if (name.includes('press') || name.includes('raise') || name.includes('pushdown') || name.includes('skull') || name.includes('tricep')) return FRAMES_LIB.press;
-  if (name.includes('squat') || name.includes('lunge') || name.includes('leg press') || name.includes('leg ext') || name.includes('leg curl') || name.includes('calf') || name.includes('step-up') || name.includes('step up')) return FRAMES_LIB.squat;
-  // Cardio + other movement defaults to a simple stand-cycle
-  return FRAMES_LIB.explosive;
-}
-
-// === ANATOMICAL FIGURE BUILDERS ===
-// Each function returns SVG markup for a 200x240 viewBox.
-// Active muscle groups highlighted with accent color.
-// Uses solid silhouettes (paths) with proper proportions — NOT stick figures.
-// (FIG_COLORS declared above, before FRAMES_LIB needs it)
-
-// === SQUAT FAMILY ===
-function stickFigure(opts){
-  const C = FIG_COLORS;
-  const stance = opts.stance;
-  let svg = '';
-  // Bar/equipment (rendered first / behind body)
-  let bar = '';
-
-  if (opts.barOnFloor) {
-    bar = `
-      <ellipse cx="50" cy="206" rx="10" ry="14" fill="${C.plate}"/>
-      <ellipse cx="150" cy="206" rx="10" ry="14" fill="${C.plate}"/>
-      <ellipse cx="50" cy="206" rx="10" ry="14" fill="none" stroke="#444" stroke-width="1"/>
-      <ellipse cx="150" cy="206" rx="10" ry="14" fill="none" stroke="#444" stroke-width="1"/>
-      <rect x="55" y="202" width="90" height="6" fill="${C.bar}" rx="2"/>
-      <rect x="55" y="202" width="90" height="2" fill="#444" rx="1"/>
-    `;
-  }
-
-  switch(stance){
-    case 'stand':
-      svg = anatomicalBody({
-        headCy: 56, torsoTop: 68, torsoBottom: 130,
-        shoulderY: 80, shoulderW: 30,
-        hipY: 130, hipW: 22,
-        thighEnd: 175, calfEnd: 210,
-        kneeBendL: 0, kneeBendR: 0,
-        leanX: 0,
-        torsoTilt: 0,
-        armPose: 'down',
-        active: opts.barOnBack ? 'quads_glutes' : ''
-      });
-      // Bar on back
-      if (opts.barOnBack) {
-        bar = `
-          <rect x="60" y="68" width="80" height="4" fill="${C.bar}" rx="1"/>
-          <ellipse cx="56" cy="70" rx="6" ry="7" fill="${C.plate}"/>
-          <ellipse cx="144" cy="70" rx="6" ry="7" fill="${C.plate}"/>
-        `;
-      }
-      break;
-
-    case 'halfSquat':
-      svg = anatomicalBody({
-        headCy: 64, torsoTop: 76, torsoBottom: 132,
-        shoulderY: 88, shoulderW: 30,
-        hipY: 132, hipW: 24,
-        thighEnd: 165, calfEnd: 210,
-        kneeBendL: 25, kneeBendR: 25,
-        leanX: -2,
-        torsoTilt: -8,
-        armPose: 'gripBack',
-        active: 'quads_glutes'
-      });
-      if (opts.barOnBack) {
-        bar = `
-          <rect x="60" y="76" width="80" height="4" fill="${C.bar}" rx="1"/>
-          <ellipse cx="56" cy="78" rx="6" ry="7" fill="${C.plate}"/>
-          <ellipse cx="144" cy="78" rx="6" ry="7" fill="${C.plate}"/>
-        `;
-      }
-      break;
-
-    case 'deepSquat':
-      svg = anatomicalBody({
-        headCy: 76, torsoTop: 88, torsoBottom: 138,
-        shoulderY: 100, shoulderW: 32,
-        hipY: 138, hipW: 26,
-        thighEnd: 158, calfEnd: 210,
-        kneeBendL: 38, kneeBendR: 38,
-        leanX: -4,
-        torsoTilt: -15,
-        armPose: 'gripBack',
-        active: 'quads_glutes_full'
-      });
-      if (opts.barOnBack) {
-        bar = `
-          <rect x="60" y="88" width="80" height="4" fill="${C.bar}" rx="1"/>
-          <ellipse cx="56" cy="90" rx="6" ry="7" fill="${C.plate}"/>
-          <ellipse cx="144" cy="90" rx="6" ry="7" fill="${C.plate}"/>
-        `;
-      }
-      break;
-
-    case 'setup':
-      svg = anatomicalBody({
-        headCy: 96, torsoTop: 108, torsoBottom: 148,
-        shoulderY: 118, shoulderW: 32,
-        hipY: 148, hipW: 22,
-        thighEnd: 175, calfEnd: 210,
-        kneeBendL: 22, kneeBendR: 22,
-        leanX: -10,
-        torsoTilt: -45,
-        armPose: 'reachDown',
-        active: 'back_hams'
-      });
-      break;
-
-    case 'liftOff':
-      svg = anatomicalBody({
-        headCy: 82, torsoTop: 94, torsoBottom: 140,
-        shoulderY: 105, shoulderW: 32,
-        hipY: 140, hipW: 22,
-        thighEnd: 172, calfEnd: 210,
-        kneeBendL: 15, kneeBendR: 15,
-        leanX: -6,
-        torsoTilt: -30,
-        armPose: 'reachDown',
-        active: 'back_glutes_full'
-      });
-      // Bar in motion
-      bar = `
-        <ellipse cx="50" cy="178" rx="10" ry="14" fill="${C.plate}"/>
-        <ellipse cx="150" cy="178" rx="10" ry="14" fill="${C.plate}"/>
-        <rect x="55" y="175" width="90" height="6" fill="${C.bar}" rx="2"/>
-      `;
-      break;
-
-    case 'pastKnees':
-      svg = anatomicalBody({
-        headCy: 64, torsoTop: 76, torsoBottom: 130,
-        shoulderY: 88, shoulderW: 32,
-        hipY: 130, hipW: 22,
-        thighEnd: 170, calfEnd: 210,
-        kneeBendL: 5, kneeBendR: 5,
-        leanX: -2,
-        torsoTilt: -10,
-        armPose: 'gripFront',
-        active: 'glutes_back'
-      });
-      // Bar at thigh height
-      bar = `
-        <ellipse cx="50" cy="148" rx="10" ry="14" fill="${C.plate}"/>
-        <ellipse cx="150" cy="148" rx="10" ry="14" fill="${C.plate}"/>
-        <rect x="55" y="145" width="90" height="6" fill="${C.bar}" rx="2"/>
-      `;
-      break;
-
-    case 'lockout':
-      svg = anatomicalBody({
-        headCy: 56, torsoTop: 68, torsoBottom: 128,
-        shoulderY: 80, shoulderW: 32,
-        hipY: 128, hipW: 24,
-        thighEnd: 175, calfEnd: 210,
-        kneeBendL: 0, kneeBendR: 0,
-        leanX: 0,
-        torsoTilt: 0,
-        armPose: 'gripFront',
-        active: 'glutes_traps'
-      });
-      bar = `
-        <ellipse cx="50" cy="135" rx="10" ry="14" fill="${C.plate}"/>
-        <ellipse cx="150" cy="135" rx="10" ry="14" fill="${C.plate}"/>
-        <rect x="55" y="132" width="90" height="6" fill="${C.bar}" rx="2"/>
-      `;
-      break;
-
-    case 'hinge':
-      svg = anatomicalBody({
-        headCy: 76, torsoTop: 88, torsoBottom: 138,
-        shoulderY: 98, shoulderW: 30,
-        hipY: 138, hipW: 24,
-        thighEnd: 175, calfEnd: 210,
-        kneeBendL: 8, kneeBendR: 8,
-        leanX: 6,
-        torsoTilt: -32,
-        armPose: 'gripFront',
-        active: 'hams_glutes'
-      });
-      if (opts.barAtHip) {
-        bar = `
-          <ellipse cx="50" cy="155" rx="10" ry="14" fill="${C.plate}"/>
-          <ellipse cx="150" cy="155" rx="10" ry="14" fill="${C.plate}"/>
-          <rect x="55" y="152" width="90" height="6" fill="${C.bar}" rx="2"/>
-        `;
-      }
-      break;
-
-    case 'deepHinge':
-      svg = anatomicalBody({
-        headCy: 100, torsoTop: 112, torsoBottom: 144,
-        shoulderY: 122, shoulderW: 28,
-        hipY: 144, hipW: 26,
-        thighEnd: 175, calfEnd: 210,
-        kneeBendL: 5, kneeBendR: 5,
-        leanX: 14,
-        torsoTilt: -55,
-        armPose: 'gripFront',
-        active: 'hams_full'
-      });
-      if (opts.barAtHip) {
-        bar = `
-          <ellipse cx="50" cy="175" rx="10" ry="14" fill="${C.plate}"/>
-          <ellipse cx="150" cy="175" rx="10" ry="14" fill="${C.plate}"/>
-          <rect x="55" y="172" width="90" height="6" fill="${C.bar}" rx="2"/>
-        `;
-      }
-      break;
-
-    case 'jump':
-      svg = anatomicalBody({
-        headCy: 46, torsoTop: 58, torsoBottom: 118,
-        shoulderY: 68, shoulderW: 30,
-        hipY: 118, hipW: 22,
-        thighEnd: 155, calfEnd: 200,
-        kneeBendL: 12, kneeBendR: 12,
-        leanX: 0,
-        torsoTilt: 0,
-        armPose: 'overhead',
-        active: 'full_body_red'
-      });
-      // No floor, body slightly lifted
-      break;
-  }
-
-  return bar + svg;
-}
-
-// === BENCH FAMILY ===
-function benchFigure(opts){
-  const C = FIG_COLORS;
-  // Bench at fixed position
-  const bench = `
-    <rect x="35" y="155" width="130" height="16" fill="${C.benchTop}" rx="3"/>
-    <rect x="35" y="155" width="130" height="3" fill="#4a4a4a" rx="1"/>
-    <rect x="48" y="171" width="6" height="22" fill="${C.bench}"/>
-    <rect x="146" y="171" width="6" height="22" fill="${C.bench}"/>
-    <rect x="40" y="190" width="22" height="4" fill="${C.bench}"/>
-    <rect x="138" y="190" width="22" height="4" fill="${C.bench}"/>
-  `;
-
-  // Body lying horizontal on bench
-  const body = anatomicalBodyHorizontal({
-    headX: 50, neckW: 8,
-    torsoStart: 60, torsoEnd: 140,
-    shoulderW: 24,
-    legStart: 140, legEnd: 195,
-    legBend: 'overEdge',
-    active: 'chest_tris'
-  });
-
-  let arms, bar;
-  const phase = opts.phase;
-  // Bar moves vertically based on phase
-  const barY = phase === 'unrack' ? 88 : phase === 'lower' ? 110 : phase === 'touch' ? 138 : 95;
-
-  // Arms — anatomical
-  switch(phase){
-    case 'unrack':
-      arms = `
-        <path d="M 100,140 Q 96,118 99,96 L 102,90" stroke="${C.body}" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <path d="M 100,140 Q 104,118 101,96 L 98,90" stroke="${C.body}" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <circle cx="95" cy="92" r="5" fill="${C.body}"/>
-        <circle cx="105" cy="92" r="5" fill="${C.body}"/>
-      `;
-      break;
-    case 'lower':
-      arms = `
-        <path d="M 100,140 Q 88,128 80,116" stroke="${C.body}" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <path d="M 100,140 Q 112,128 120,116" stroke="${C.body}" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <path d="M 80,116 Q 78,108 82,103" stroke="${C.body}" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <path d="M 120,116 Q 122,108 118,103" stroke="${C.body}" stroke-width="9" stroke-linecap="round" fill="none"/>
-      `;
-      break;
-    case 'touch':
-      arms = `
-        <path d="M 100,140 Q 84,138 76,132" stroke="${C.active}" stroke-width="10" stroke-linecap="round" fill="none"/>
-        <path d="M 100,140 Q 116,138 124,132" stroke="${C.active}" stroke-width="10" stroke-linecap="round" fill="none"/>
-        <path d="M 76,132 Q 74,128 78,124" stroke="${C.active}" stroke-width="10" stroke-linecap="round" fill="none"/>
-        <path d="M 124,132 Q 126,128 122,124" stroke="${C.active}" stroke-width="10" stroke-linecap="round" fill="none"/>
-      `;
-      break;
-    case 'press':
-      arms = `
-        <path d="M 100,140 Q 94,118 96,100" stroke="${C.active}" stroke-width="10" stroke-linecap="round" fill="none"/>
-        <path d="M 100,140 Q 106,118 104,100" stroke="${C.active}" stroke-width="10" stroke-linecap="round" fill="none"/>
-        <circle cx="96" cy="96" r="5" fill="${C.active}"/>
-        <circle cx="104" cy="96" r="5" fill="${C.active}"/>
-      `;
-      break;
-  }
-
-  // Bar
-  const barColor = (phase === 'touch' || phase === 'press') ? C.active : C.bar;
-  bar = `
-    <ellipse cx="50" cy="${barY}" rx="10" ry="14" fill="${C.plate}"/>
-    <ellipse cx="150" cy="${barY}" rx="10" ry="14" fill="${C.plate}"/>
-    <rect x="55" y="${barY-3}" width="90" height="6" fill="${barColor}" rx="2"/>
-    <rect x="55" y="${barY-3}" width="90" height="2" fill="#444" rx="1"/>
-  `;
-
-  return bench + body + arms + bar;
-}
-
-// === PRESS FAMILY (Overhead) ===
-function pressFigure(opts){
-  const C = FIG_COLORS;
-  const phase = opts.phase;
-
-  let bodyOpts, armPose, active, barY;
-  switch(phase){
-    case 'rack':
-      bodyOpts = { headCy: 50, torsoTop: 62, torsoBottom: 130, shoulderY: 72, shoulderW: 32, hipY: 130, hipW: 22, thighEnd: 175, calfEnd: 210, kneeBendL: 0, kneeBendR: 0, leanX: 0, torsoTilt: 0 };
-      armPose = 'rackPosition';
-      active = 'shoulders';
-      barY = 70;
-      break;
-    case 'drive':
-      bodyOpts = { headCy: 52, torsoTop: 64, torsoBottom: 132, shoulderY: 74, shoulderW: 32, hipY: 132, hipW: 22, thighEnd: 175, calfEnd: 210, kneeBendL: 0, kneeBendR: 0, leanX: 0, torsoTilt: -2 };
-      armPose = 'pressDrive';
-      active = 'shoulders_tris';
-      barY = 45;
-      break;
-    case 'overhead':
-      bodyOpts = { headCy: 56, torsoTop: 68, torsoBottom: 130, shoulderY: 80, shoulderW: 32, hipY: 130, hipW: 22, thighEnd: 175, calfEnd: 210, kneeBendL: 0, kneeBendR: 0, leanX: 0, torsoTilt: 0 };
-      armPose = 'overhead';
-      active = 'shoulders_tris';
-      barY = 20;
-      break;
-    case 'lower':
-      bodyOpts = { headCy: 52, torsoTop: 64, torsoBottom: 130, shoulderY: 74, shoulderW: 32, hipY: 130, hipW: 22, thighEnd: 175, calfEnd: 210, kneeBendL: 0, kneeBendR: 0, leanX: 0, torsoTilt: 0 };
-      armPose = 'pressLower';
-      active = 'shoulders';
-      barY = 50;
-      break;
-  }
-  bodyOpts.armPose = armPose;
-  bodyOpts.active = active;
-
-  const body = anatomicalBody(bodyOpts);
-  const barColor = (phase === 'drive' || phase === 'overhead') ? C.active : C.bar;
-  const bar = `
-    <ellipse cx="50" cy="${barY}" rx="10" ry="14" fill="${C.plate}"/>
-    <ellipse cx="150" cy="${barY}" rx="10" ry="14" fill="${C.plate}"/>
-    <rect x="55" y="${barY-3}" width="90" height="6" fill="${barColor}" rx="2"/>
-    <rect x="55" y="${barY-3}" width="90" height="2" fill="#444" rx="1"/>
-  `;
-
-  return body + bar;
-}
-
-// === PULL FAMILY ===
-function pullFigure(opts){
-  const C = FIG_COLORS;
-  const phase = opts.phase;
-
-  // Pull-up bar
-  const pullBar = `
-    <rect x="30" y="32" width="140" height="6" fill="${C.bar}" rx="2"/>
-    <rect x="30" y="32" width="140" height="2" fill="#444" rx="1"/>
-    <rect x="38" y="12" width="4" height="20" fill="#4a4a4a"/>
-    <rect x="158" y="12" width="4" height="20" fill="#4a4a4a"/>
-  `;
-
-  let bodyOpts;
-  switch(phase){
-    case 'hang':
-      bodyOpts = { headCy: 78, torsoTop: 90, torsoBottom: 150, shoulderY: 100, shoulderW: 30, hipY: 150, hipW: 22, thighEnd: 188, calfEnd: 220, kneeBendL: 0, kneeBendR: 0, leanX: 0, torsoTilt: 0, armPose: 'overheadGrip', active: 'lats_back' };
-      break;
-    case 'pull':
-      bodyOpts = { headCy: 62, torsoTop: 74, torsoBottom: 134, shoulderY: 84, shoulderW: 32, hipY: 134, hipW: 22, thighEnd: 172, calfEnd: 205, kneeBendL: 8, kneeBendR: 8, leanX: 0, torsoTilt: 0, armPose: 'pullingUp', active: 'lats_back_bis' };
-      break;
-    case 'top':
-      bodyOpts = { headCy: 50, torsoTop: 62, torsoBottom: 122, shoulderY: 72, shoulderW: 34, hipY: 122, hipW: 22, thighEnd: 160, calfEnd: 195, kneeBendL: 12, kneeBendR: 12, leanX: 0, torsoTilt: 0, armPose: 'topPullup', active: 'lats_back_bis_full' };
-      break;
-    case 'lower':
-      bodyOpts = { headCy: 70, torsoTop: 82, torsoBottom: 142, shoulderY: 92, shoulderW: 30, hipY: 142, hipW: 22, thighEnd: 180, calfEnd: 215, kneeBendL: 3, kneeBendR: 3, leanX: 0, torsoTilt: 0, armPose: 'overheadGrip', active: 'lats_back' };
-      break;
-  }
-  const body = anatomicalBody(bodyOpts);
-  return pullBar + body;
-}
-
-// === CORE FAMILY ===
-function coreFigure(opts){
-  const C = FIG_COLORS;
-  const phase = opts.phase;
-  // Plank/horizontal positions
-  let yOff, headX, active;
-  switch(phase){
-    case 'start':
-      yOff = 0; active = 'core_light';
-      break;
-    case 'contract':
-      yOff = -8; active = 'core_med';
-      break;
-    case 'hold':
-      yOff = -14; active = 'core_full';
-      break;
-    case 'return':
-      yOff = -4; active = 'core_light';
-      break;
-  }
-  return anatomicalBodyHorizontal({
-    headX: 42, neckW: 8,
-    torsoStart: 54, torsoEnd: 148,
-    shoulderW: 22,
-    legStart: 148, legEnd: 188,
-    legBend: 'extended',
-    bodyYOffset: yOff,
-    active: active,
-    isPlank: true
-  });
-}
-
-// === ANATOMICAL BODY (VERTICAL) ===
-// Builds a properly-proportioned standing body with adjustable bends.
-// Uses paths for muscle shaping rather than stick lines.
-function anatomicalBody(opts){
-  const C = FIG_COLORS;
-  const cx = 100;
-  const o = opts;
-
-  // Tilt the torso based on torsoTilt (degrees, negative = forward lean)
-  const tiltRad = (o.torsoTilt || 0) * Math.PI / 180;
-  const torsoLen = o.torsoBottom - o.torsoTop;
-  const torsoTopX = cx + o.leanX;
-  const torsoTopY = o.torsoTop;
-  const torsoBottomX = torsoTopX + Math.sin(tiltRad) * torsoLen;
-  const torsoBottomY = torsoTopY + Math.cos(tiltRad) * torsoLen;
-  const torsoMidX = (torsoTopX + torsoBottomX) / 2;
-  const torsoMidY = (torsoTopY + torsoBottomY) / 2;
-
-  // Shoulder positions (left & right offset from torso top)
-  const shoulderL_X = torsoTopX - o.shoulderW/2;
-  const shoulderL_Y = o.shoulderY + (torsoTopY - o.torsoTop);
-  const shoulderR_X = torsoTopX + o.shoulderW/2;
-  const shoulderR_Y = o.shoulderY + (torsoTopY - o.torsoTop);
-
-  // Hip positions
-  const hipL_X = torsoBottomX - o.hipW/2;
-  const hipR_X = torsoBottomX + o.hipW/2;
-  const hipY = torsoBottomY;
-
-  // Knees (bent inward when squatting)
-  const thighLen = o.thighEnd - o.hipY;
-  const kneeL_X = hipL_X - 2 - (o.kneeBendL || 0) * 0.3;
-  const kneeR_X = hipR_X + 2 + (o.kneeBendR || 0) * 0.3;
-  const kneeL_Y = hipY + thighLen - (o.kneeBendL || 0) * 0.4;
-  const kneeR_Y = hipY + thighLen - (o.kneeBendR || 0) * 0.4;
-
-  // Feet
-  const footL_X = hipL_X - 6;
-  const footR_X = hipR_X + 6;
-  const footY = o.calfEnd;
-
-  // Determine muscle highlights
-  const active = o.active || '';
-  const activeQuads = active.includes('quads');
-  const activeGlutes = active.includes('glutes');
-  const activeHams = active.includes('hams');
-  const activeBack = active.includes('back');
-  const activeChest = active.includes('chest');
-  const activeShoulders = active.includes('shoulders');
-  const activeLats = active.includes('lats');
-  const activeBis = active.includes('bis');
-  const activeTris = active.includes('tris');
-  const activeTraps = active.includes('traps');
-  const fullBody = active.includes('full');
-
-  const skinColor = fullBody ? C.active : C.body;
-  const skinShade = fullBody ? C.activeShade : C.bodyShade;
-
-  // Head (with neck attachment)
-  const head = `
-    <ellipse cx="${torsoTopX}" cy="${o.headCy}" rx="11" ry="13" fill="${skinColor}"/>
-    <ellipse cx="${torsoTopX-3}" cy="${o.headCy-2}" rx="3" ry="4" fill="${skinShade}" opacity="0.5"/>
-  `;
-
-  // Neck (small line connecting head to torso)
-  const neckColor = (activeTraps || activeShoulders) ? C.active : skinColor;
-  const neck = `
-    <rect x="${torsoTopX-5}" y="${o.headCy+10}" width="10" height="${o.shoulderY - o.headCy - 10}" fill="${neckColor}" rx="2"/>
-  `;
-
-  // TORSO — built as a path with shoulder + lat + waist taper
-  // Going clockwise: left shoulder → right shoulder → right lat → right hip → left hip → left lat → close
-  const torsoPath = `
-    M ${shoulderL_X},${shoulderL_Y}
-    Q ${torsoTopX-o.shoulderW/2 - 4},${shoulderL_Y + 8} ${torsoTopX-o.shoulderW/2 + 4},${torsoMidY-6}
-    L ${hipL_X-2},${hipY-4}
-    Q ${hipL_X+2},${hipY+2} ${hipR_X-2},${hipY+2}
-    Q ${hipR_X-2},${hipY+2} ${hipR_X+2},${hipY-4}
-    L ${torsoTopX+o.shoulderW/2 - 4},${torsoMidY-6}
-    Q ${torsoTopX+o.shoulderW/2 + 4},${shoulderR_Y + 8} ${shoulderR_X},${shoulderR_Y}
-    Q ${torsoTopX},${shoulderL_Y-4} ${shoulderL_X},${shoulderL_Y}
-    Z
-  `;
-  const chestColor = activeChest ? C.active : skinColor;
-  const torsoShadeColor = activeBack ? C.active : skinShade;
-
-  let torso = `
-    <path d="${torsoPath}" fill="${chestColor}"/>
-  `;
-  // Chest definition line
-  if (!activeBack) {
-    torso += `<line x1="${torsoTopX}" y1="${shoulderL_Y + 6}" x2="${torsoTopX}" y2="${torsoMidY + 2}" stroke="${skinShade}" stroke-width="1.5" opacity="0.7"/>`;
-  }
-  // Ab definition
-  if (activeChest || active.includes('core')) {
-    torso += `
-      <line x1="${torsoTopX-7}" y1="${torsoMidY+4}" x2="${torsoTopX+7}" y2="${torsoMidY+4}" stroke="${skinShade}" stroke-width="1" opacity="0.4"/>
-      <line x1="${torsoTopX-6}" y1="${torsoMidY+12}" x2="${torsoTopX+6}" y2="${torsoMidY+12}" stroke="${skinShade}" stroke-width="1" opacity="0.4"/>
-    `;
-  }
-
-  // ARMS — bicep and forearm as separate shapes for definition
-  let arms = '';
-  const armColor = (activeBis || activeChest || activeTris) ? C.active : skinColor;
-  switch(o.armPose){
-    case 'down':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-4, torsoMidY+10, shoulderL_X-6, torsoBottomY+5, skinColor, activeBis ? C.active : null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+4, torsoMidY+10, shoulderR_X+6, torsoBottomY+5, skinColor, activeBis ? C.active : null);
-      break;
-    case 'gripBack':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-12, shoulderL_Y+10, shoulderL_X-18, shoulderL_Y-2, skinColor, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+12, shoulderR_Y+10, shoulderR_X+18, shoulderR_Y-2, skinColor, null);
-      break;
-    case 'gripFront':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-3, torsoMidY+15, shoulderL_X-2, torsoBottomY+8, skinColor, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+3, torsoMidY+15, shoulderR_X+2, torsoBottomY+8, skinColor, null);
-      break;
-    case 'reachDown':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-2, shoulderL_Y+30, shoulderL_X-12, shoulderL_Y+60, skinColor, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+2, shoulderR_Y+30, shoulderR_X+12, shoulderR_Y+60, skinColor, null);
-      break;
-    case 'rackPosition':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-10, shoulderL_Y+10, shoulderL_X-4, shoulderL_Y-6, activeShoulders ? C.active : skinColor, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+10, shoulderR_Y+10, shoulderR_X+4, shoulderR_Y-6, activeShoulders ? C.active : skinColor, null);
-      break;
-    case 'pressDrive':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-8, shoulderL_Y-15, shoulderL_X-2, shoulderL_Y-32, C.active, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+8, shoulderR_Y-15, shoulderR_X+2, shoulderR_Y-32, C.active, null);
-      break;
-    case 'overhead':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-4, shoulderL_Y-25, shoulderL_X-6, shoulderL_Y-50, activeShoulders ? C.active : skinColor, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+4, shoulderR_Y-25, shoulderR_X+6, shoulderR_Y-50, activeShoulders ? C.active : skinColor, null);
-      break;
-    case 'pressLower':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-9, shoulderL_Y-8, shoulderL_X-4, shoulderL_Y-22, skinColor, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+9, shoulderR_Y-8, shoulderR_X+4, shoulderR_Y-22, skinColor, null);
-      break;
-    case 'overheadGrip':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-6, shoulderL_Y-20, shoulderL_X-14, shoulderL_Y-44, activeLats ? C.active : skinColor, null)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+6, shoulderR_Y-20, shoulderR_X+14, shoulderR_Y-44, activeLats ? C.active : skinColor, null);
-      break;
-    case 'pullingUp':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-15, shoulderL_Y-10, shoulderL_X-18, shoulderL_Y-32, C.active, C.active)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+15, shoulderR_Y-10, shoulderR_X+18, shoulderR_Y-32, C.active, C.active);
-      break;
-    case 'topPullup':
-      arms = anatomicalArm(shoulderL_X, shoulderL_Y, shoulderL_X-18, shoulderL_Y-4, shoulderL_X-22, shoulderL_Y-22, C.active, C.active)
-           + anatomicalArm(shoulderR_X, shoulderR_Y, shoulderR_X+18, shoulderR_Y-4, shoulderR_X+22, shoulderR_Y-22, C.active, C.active);
-      break;
-  }
-
-  // LEGS — quads + calves, with knees
-  const quadColor = activeQuads ? C.active : skinColor;
-  const hamColor = activeHams ? C.active : skinColor;
-  const gluteColor = activeGlutes ? C.active : skinColor;
-
-  // Left thigh
-  const thighL = `
-    <path d="M ${hipL_X-2},${hipY-2} Q ${hipL_X-6},${(hipY+kneeL_Y)/2} ${kneeL_X-2},${kneeL_Y} L ${kneeL_X+2},${kneeL_Y} Q ${hipL_X+2},${(hipY+kneeL_Y)/2} ${hipL_X+2},${hipY-2} Z" fill="${quadColor}"/>
-  `;
-  const thighR = `
-    <path d="M ${hipR_X-2},${hipY-2} Q ${hipR_X-2},${(hipY+kneeR_Y)/2} ${kneeR_X-2},${kneeR_Y} L ${kneeR_X+2},${kneeR_Y} Q ${hipR_X+6},${(hipY+kneeR_Y)/2} ${hipR_X+2},${hipY-2} Z" fill="${quadColor}"/>
-  `;
-
-  // Calves
-  const calfL = `
-    <path d="M ${kneeL_X-2},${kneeL_Y} Q ${kneeL_X-6},${(kneeL_Y+footY)/2} ${footL_X-2},${footY} L ${footL_X+4},${footY} Q ${kneeL_X+1},${(kneeL_Y+footY)/2} ${kneeL_X+2},${kneeL_Y} Z" fill="${skinColor}"/>
-  `;
-  const calfR = `
-    <path d="M ${kneeR_X-2},${kneeR_Y} Q ${kneeR_X-1},${(kneeR_Y+footY)/2} ${footR_X-4},${footY} L ${footR_X+2},${footY} Q ${kneeR_X+6},${(kneeR_Y+footY)/2} ${kneeR_X+2},${kneeR_Y} Z" fill="${skinColor}"/>
-  `;
-
-  // Knee caps
-  const knees = `
-    <circle cx="${kneeL_X}" cy="${kneeL_Y}" r="3" fill="${skinShade}"/>
-    <circle cx="${kneeR_X}" cy="${kneeR_Y}" r="3" fill="${skinShade}"/>
-  `;
-
-  // Feet
-  const feet = `
-    <ellipse cx="${footL_X}" cy="${footY+2}" rx="9" ry="4" fill="${skinShade}"/>
-    <ellipse cx="${footR_X}" cy="${footY+2}" rx="9" ry="4" fill="${skinShade}"/>
-  `;
-
-  return head + neck + thighL + thighR + calfL + calfR + knees + feet + torso + arms;
-}
-
-// === ANATOMICAL ARM HELPER ===
-// Draws bicep (shoulder→elbow) and forearm (elbow→hand) as tapered shapes.
-function anatomicalArm(shX, shY, elbowX, elbowY, handX, handY, color, accentColor){
-  const bicepColor = accentColor || color;
-  return `
-    <path d="M ${shX-4},${shY-2} Q ${shX-6},${(shY+elbowY)/2} ${elbowX-3},${elbowY} L ${elbowX+3},${elbowY} Q ${shX+4},${(shY+elbowY)/2} ${shX+4},${shY-2} Z" fill="${bicepColor}"/>
-    <path d="M ${elbowX-3},${elbowY} Q ${(elbowX+handX)/2 - 2},${(elbowY+handY)/2} ${handX-2},${handY} L ${handX+3},${handY} Q ${(elbowX+handX)/2 + 2},${(elbowY+handY)/2} ${elbowX+3},${elbowY} Z" fill="${color}"/>
-    <circle cx="${elbowX}" cy="${elbowY}" r="2.5" fill="${color}" opacity="0.7"/>
-    <circle cx="${handX}" cy="${handY}" r="3.5" fill="${color}"/>
-  `;
-}
-
-// === ANATOMICAL BODY (HORIZONTAL — for bench/plank/etc) ===
-function anatomicalBodyHorizontal(opts){
-  const C = FIG_COLORS;
-  const o = opts;
-  const cy = 168 + (o.bodyYOffset || 0);  // base Y (lying on bench or plank)
-  const isPlank = o.isPlank;
-
-  const active = o.active || '';
-  const skinColor = active.includes('full') ? C.active : C.body;
-  const coreActive = active.includes('core');
-
-  // Head (oval)
-  const head = `
-    <ellipse cx="${o.headX}" cy="${cy + 2}" rx="10" ry="11" fill="${skinColor}"/>
-    <ellipse cx="${o.headX-2}" cy="${cy}" rx="3" ry="4" fill="${C.bodyShade}" opacity="0.4"/>
-  `;
-  // Neck
-  const neck = `<rect x="${o.headX+8}" y="${cy-3}" width="${o.neckW}" height="10" fill="${skinColor}" rx="2"/>`;
-
-  // TORSO — wider at shoulders, narrower at waist
-  const sx = o.torsoStart;
-  const ex = o.torsoEnd;
-  const wTop = o.shoulderW;
-  const wMid = o.shoulderW - 2;
-  const torso = `
-    <path d="M ${sx},${cy-wTop/2}
-             Q ${sx-2},${cy} ${sx},${cy+wTop/2}
-             L ${ex-10},${cy+wMid/2}
-             Q ${ex+4},${cy} ${ex-10},${cy-wMid/2}
-             Z" fill="${skinColor}"/>
-  `;
-  // Ab definition
-  let abs = '';
-  if (coreActive || active.includes('chest')) {
-    const segments = active.includes('full') ? 4 : 3;
-    for (let i = 1; i <= segments; i++) {
-      const x = sx + (ex - sx) * (i / (segments + 1));
-      abs += `<line x1="${x}" y1="${cy-wTop/2+4}" x2="${x}" y2="${cy+wTop/2-4}" stroke="${C.bodyShade}" stroke-width="1" opacity="0.5"/>`;
-    }
-    // Center line
-    abs += `<line x1="${sx+5}" y1="${cy}" x2="${ex-12}" y2="${cy}" stroke="${C.bodyShade}" stroke-width="1" opacity="0.5"/>`;
-  }
-
-  // Legs
-  let legs;
-  if (o.legBend === 'overEdge') {
-    // Bench: legs hang over edge of bench (down)
-    legs = `
-      <path d="M ${o.legStart-5},${cy-8} Q ${o.legStart+10},${cy-4} ${o.legStart+18},${cy+10} L ${o.legStart+30},${cy+45} L ${o.legEnd-5},${cy+45} L ${o.legEnd-5},${cy+10} Q ${o.legStart+12},${cy+6} ${o.legStart-5},${cy+2} Z" fill="${skinColor}"/>
-      <path d="M ${o.legStart-5},${cy+10} Q ${o.legStart+8},${cy+14} ${o.legStart+22},${cy+25} L ${o.legStart+35},${cy+50} L ${o.legEnd-2},${cy+50} L ${o.legEnd-2},${cy+25} Q ${o.legStart+15},${cy+20} ${o.legStart-2},${cy+12} Z" fill="${C.bodyShade}" opacity="0.6"/>
-    `;
-  } else {
-    // Extended (plank or floor)
-    legs = `
-      <path d="M ${o.legStart-5},${cy-6} L ${o.legEnd},${cy-3} L ${o.legEnd+8},${cy+2} L ${o.legEnd},${cy+6} L ${o.legStart-5},${cy+6} Z" fill="${skinColor}"/>
-    `;
-  }
-
-  // Plank arms (forearms down on floor)
-  let arms = '';
-  if (isPlank) {
-    // Forearms supporting body
-    arms = `
-      <path d="M ${sx+10},${cy-wTop/2} L ${sx+10},${cy+wTop/2+30} L ${sx+20},${cy+wTop/2+30} L ${sx+15},${cy-wTop/2} Z" fill="${active.includes('full') ? C.active : skinColor}"/>
-      <ellipse cx="${sx+15}" cy="${cy+wTop/2+32}" rx="6" ry="3" fill="${C.bodyShade}"/>
-    `;
-  }
-
-  return legs + torso + abs + neck + head + arms;
-}
-
 
 function closeDetail(){
   document.getElementById('detailPanel').classList.remove('open');
@@ -2936,449 +2313,7 @@ window.addEventListener('scroll', () => {
   navEl.classList.toggle('scrolled', window.scrollY > 50);
 }, { passive: true });
 
-// 3D animation hooks — defined in module script below
-window.init3DAnimation = window.init3DAnimation || function(){};
-window.destroy3DAnimation = window.destroy3DAnimation || function(){};
 </script>
 
-<script type="module">
-/* ============== THREE.JS 3D ANIMATION SYSTEM ==============
- * Big 4 lifts only (Squat, Bench, Deadlift, OHP).
- * Procedural figure with proper anatomy + form-accurate keyframes.
- * Self-paced scrubber with play/pause.
- */
-import * as THREE from 'three';
-
-// === FIGURE FACTORY ===
-function createFigure(){
-  const root = new THREE.Group();
-  const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a890, roughness: 0.7, metalness: 0.05 });
-  const muscleMat = new THREE.MeshStandardMaterial({ color: 0xc47860, roughness: 0.6, metalness: 0.05 });
-
-  // Head
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 24, 16), skinMat);
-  head.position.y = 1.72;
-  head.scale.set(0.9, 1.1, 0.95);
-  root.add(head);
-
-  // Neck
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.08, 12), skinMat);
-  neck.position.y = 1.58;
-  root.add(neck);
-
-  // Torso group (pivots from hips for tilt)
-  const torsoGroup = new THREE.Group();
-  torsoGroup.position.y = 1.25;
-  root.add(torsoGroup);
-
-  const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.18, 8, 16), muscleMat);
-  chest.scale.set(1.4, 1, 0.7);
-  chest.position.y = 0.18;
-  torsoGroup.add(chest);
-
-  const waist = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.1, 8, 16), muscleMat);
-  waist.scale.set(1.3, 1, 0.7);
-  waist.position.y = -0.05;
-  torsoGroup.add(waist);
-
-  const hips = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), muscleMat);
-  hips.scale.set(1.3, 0.6, 0.85);
-  hips.position.y = -0.2;
-  torsoGroup.add(hips);
-
-  function makeArm(side){
-    const armRoot = new THREE.Group();
-    armRoot.position.set(side * 0.22, 1.45, 0);
-    const delt = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), muscleMat);
-    armRoot.add(delt);
-    const upperPivot = new THREE.Group();
-    armRoot.add(upperPivot);
-    const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.22, 4, 12), muscleMat);
-    upper.position.y = -0.14;
-    upperPivot.add(upper);
-    const elbowPivot = new THREE.Group();
-    elbowPivot.position.y = -0.27;
-    upperPivot.add(elbowPivot);
-    const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.2, 4, 12), muscleMat);
-    forearm.position.y = -0.12;
-    elbowPivot.add(forearm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), skinMat);
-    hand.scale.set(1, 1.3, 0.7);
-    hand.position.y = -0.25;
-    elbowPivot.add(hand);
-    armRoot.userData.shoulder = upperPivot;
-    armRoot.userData.elbow = elbowPivot;
-    return armRoot;
-  }
-
-  const armL = makeArm(-1);
-  const armR = makeArm(1);
-  root.add(armL);
-  root.add(armR);
-
-  function makeLeg(side){
-    const legRoot = new THREE.Group();
-    legRoot.position.set(side * 0.1, 1.02, 0);
-    const hipPivot = new THREE.Group();
-    legRoot.add(hipPivot);
-    const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.34, 6, 12), muscleMat);
-    thigh.position.y = -0.21;
-    hipPivot.add(thigh);
-    const kneePivot = new THREE.Group();
-    kneePivot.position.y = -0.42;
-    hipPivot.add(kneePivot);
-    const calf = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.32, 6, 12), muscleMat);
-    calf.position.y = -0.2;
-    kneePivot.add(calf);
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.22), skinMat);
-    foot.position.set(0, -0.4, 0.06);
-    kneePivot.add(foot);
-    legRoot.userData.hip = hipPivot;
-    legRoot.userData.knee = kneePivot;
-    return legRoot;
-  }
-
-  const legL = makeLeg(-1);
-  const legR = makeLeg(1);
-  root.add(legL);
-  root.add(legR);
-
-  root.userData.joints = {
-    torso: torsoGroup,
-    shoulderL: armL.userData.shoulder,
-    shoulderR: armR.userData.shoulder,
-    elbowL: armL.userData.elbow,
-    elbowR: armR.userData.elbow,
-    hipL: legL.userData.hip,
-    hipR: legR.userData.hip,
-    kneeL: legL.userData.knee,
-    kneeR: legR.userData.knee,
-  };
-
-  return root;
-}
-
-function createBarbell(){
-  const group = new THREE.Group();
-  const barMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.35, metalness: 0.9 });
-  const plateMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.6, metalness: 0.3 });
-  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 16), barMat);
-  bar.rotation.z = Math.PI / 2;
-  group.add(bar);
-  for (let side of [-1, 1]) {
-    for (let i = 0; i < 2; i++) {
-      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.04, 24), plateMat);
-      plate.rotation.z = Math.PI / 2;
-      plate.position.x = side * (0.55 + i * 0.05);
-      group.add(plate);
-    }
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.012, 8, 24), new THREE.MeshStandardMaterial({ color: 0xff2d00 }));
-    ring.rotation.y = Math.PI / 2;
-    ring.position.x = side * 0.625;
-    group.add(ring);
-  }
-  return group;
-}
-
-function createBench(){
-  const benchMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7 });
-  const padMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 });
-  const group = new THREE.Group();
-  const pad = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 1.3), padMat);
-  pad.position.y = 0.4;
-  group.add(pad);
-  for (let z of [-0.5, 0.5]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.4, 0.08), benchMat);
-    leg.position.set(0, 0.18, z);
-    group.add(leg);
-    const brace = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.08), benchMat);
-    brace.position.set(0, 0.02, z);
-    group.add(brace);
-  }
-  return group;
-}
-
-// === FORM-ACCURATE LIFT POSES ===
-function lerp(a, b, t){ return a + (b - a) * t; }
-function easeInOut(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
-
-function squatPose(t){
-  const phase = t < 0.5 ? easeInOut(t * 2) : easeInOut((1 - t) * 2);
-  return {
-    rootY: lerp(0, -0.38, phase),
-    torsoTilt: lerp(0, -0.4, phase),
-    hipPivot: lerp(0, -1.3, phase),
-    kneePivot: lerp(0, 1.7, phase),
-    elbowBend: -1.4,
-    barY: lerp(1.55, 1.17, phase),
-    phase: t < 0.05 ? 'STAND' : t < 0.45 ? 'DESCENT' : t < 0.55 ? 'BOTTOM' : t < 0.95 ? 'DRIVE UP' : 'LOCKOUT'
-  };
-}
-
-function benchPose(t){
-  const phase = t < 0.5 ? easeInOut(t * 2) : easeInOut((1 - t) * 2);
-  return {
-    elbowBend: lerp(0, 1.9, phase),
-    shoulderRot: lerp(0, 0.4, phase),
-    barY: lerp(1.05, 0.78, phase),
-    phase: t < 0.05 ? 'UNRACK' : t < 0.45 ? 'LOWER' : t < 0.55 ? 'TOUCH CHEST' : t < 0.95 ? 'PRESS' : 'LOCKOUT'
-  };
-}
-
-function deadliftPose(t){
-  const phase = t < 0.5 ? easeInOut(t * 2) : easeInOut((1 - t) * 2);
-  return {
-    rootY: lerp(-0.38, 0, phase),
-    torsoTilt: lerp(-1.0, 0, phase),
-    hipPivot: lerp(-1.5, 0, phase),
-    kneePivot: lerp(0.9, 0, phase),
-    barY: lerp(0.18, 1.05, phase),
-    barZ: lerp(0.15, 0, phase),
-    phase: t < 0.05 ? 'SETUP' : t < 0.45 ? 'LIFT OFF' : t < 0.55 ? 'PAST KNEES' : t < 0.95 ? 'LOCKOUT' : 'LOWERING'
-  };
-}
-
-function ohpPose(t){
-  const phase = t < 0.5 ? easeInOut(t * 2) : easeInOut((1 - t) * 2);
-  return {
-    elbowBend: lerp(2.4, 0.1, phase),
-    shoulderRot: lerp(0.3, -2.7, phase),
-    barY: lerp(1.46, 2.05, phase),
-    phase: t < 0.05 ? 'RACK' : t < 0.45 ? 'DRIVE UP' : t < 0.55 ? 'OVERHEAD' : t < 0.95 ? 'LOWER' : 'RACK'
-  };
-}
-
-// === SCENE STATE ===
-let currentScene = null;
-let animationFrame = null;
-let isPlaying = false;
-let scrubT = 0;
-
-function applyPose(scene, t){
-  const figure = scene.figure;
-  const joints = figure.userData.joints;
-  let pose;
-
-  if (scene.exerciseType === 'squat') {
-    pose = squatPose(t);
-    figure.position.y = pose.rootY;
-    figure.rotation.x = 0;
-    joints.torso.rotation.x = pose.torsoTilt;
-    joints.hipL.rotation.x = pose.hipPivot;
-    joints.hipR.rotation.x = pose.hipPivot;
-    joints.kneeL.rotation.x = pose.kneePivot;
-    joints.kneeR.rotation.x = pose.kneePivot;
-    joints.shoulderL.rotation.x = -2.3;
-    joints.shoulderR.rotation.x = -2.3;
-    joints.shoulderL.rotation.z = 0.3;
-    joints.shoulderR.rotation.z = -0.3;
-    joints.elbowL.rotation.x = pose.elbowBend;
-    joints.elbowR.rotation.x = pose.elbowBend;
-    if (scene.bar) scene.bar.position.set(0, pose.barY + pose.rootY, -0.05);
-    return pose;
-  }
-  if (scene.exerciseType === 'deadlift') {
-    pose = deadliftPose(t);
-    figure.position.y = pose.rootY;
-    figure.rotation.x = 0;
-    joints.torso.rotation.x = pose.torsoTilt;
-    joints.hipL.rotation.x = pose.hipPivot;
-    joints.hipR.rotation.x = pose.hipPivot;
-    joints.kneeL.rotation.x = pose.kneePivot;
-    joints.kneeR.rotation.x = pose.kneePivot;
-    joints.shoulderL.rotation.x = 0;
-    joints.shoulderR.rotation.x = 0;
-    joints.shoulderL.rotation.z = 0.05;
-    joints.shoulderR.rotation.z = -0.05;
-    joints.elbowL.rotation.x = 0;
-    joints.elbowR.rotation.x = 0;
-    if (scene.bar) scene.bar.position.set(0, pose.barY, pose.barZ);
-    return pose;
-  }
-  if (scene.exerciseType === 'bench') {
-    pose = benchPose(t);
-    figure.position.set(0, 0.5, 0);
-    figure.rotation.x = -Math.PI / 2;
-    joints.torso.rotation.x = 0;
-    joints.shoulderL.rotation.x = -Math.PI / 2 + pose.shoulderRot;
-    joints.shoulderR.rotation.x = -Math.PI / 2 + pose.shoulderRot;
-    joints.shoulderL.rotation.z = 0.2;
-    joints.shoulderR.rotation.z = -0.2;
-    joints.elbowL.rotation.x = pose.elbowBend;
-    joints.elbowR.rotation.x = pose.elbowBend;
-    joints.hipL.rotation.x = 0.3;
-    joints.hipR.rotation.x = 0.3;
-    joints.kneeL.rotation.x = 0.6;
-    joints.kneeR.rotation.x = 0.6;
-    if (scene.bar) scene.bar.position.set(0, pose.barY, 0);
-    return pose;
-  }
-  if (scene.exerciseType === 'ohp') {
-    pose = ohpPose(t);
-    figure.position.y = 0;
-    figure.rotation.x = 0;
-    joints.torso.rotation.x = 0;
-    joints.shoulderL.rotation.x = pose.shoulderRot;
-    joints.shoulderR.rotation.x = pose.shoulderRot;
-    joints.shoulderL.rotation.z = 0.15;
-    joints.shoulderR.rotation.z = -0.15;
-    joints.elbowL.rotation.x = pose.elbowBend;
-    joints.elbowR.rotation.x = pose.elbowBend;
-    joints.hipL.rotation.x = 0;
-    joints.hipR.rotation.x = 0;
-    joints.kneeL.rotation.x = 0.05;
-    joints.kneeR.rotation.x = 0.05;
-    if (scene.bar) scene.bar.position.set(0, pose.barY, 0);
-    return pose;
-  }
-  return { phase: '?' };
-}
-
-function makeScene(container, exerciseType){
-  const w = container.clientWidth;
-  const h = container.clientHeight;
-
-  const scene = new THREE.Scene();
-  scene.background = null;
-  scene.fog = new THREE.Fog(0x000000, 4, 8);
-
-  const camera = new THREE.PerspectiveCamera(35, w/h, 0.1, 50);
-  camera.position.set(2.5, 1.4, 3.2);
-  camera.lookAt(0, 1.0, 0);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(w, h);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  container.appendChild(renderer.domElement);
-
-  const keyLight = new THREE.DirectionalLight(0xffe0d0, 1.4);
-  keyLight.position.set(2, 3, 2);
-  keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(1024, 1024);
-  scene.add(keyLight);
-  const fillLight = new THREE.DirectionalLight(0x6080ff, 0.4);
-  fillLight.position.set(-2, 1, 1);
-  scene.add(fillLight);
-  const rimLight = new THREE.DirectionalLight(0xff2d00, 0.6);
-  rimLight.position.set(-1, 2, -2);
-  scene.add(rimLight);
-  scene.add(new THREE.AmbientLight(0x444466, 0.3));
-
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(8, 8),
-    new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.receiveShadow = true;
-  scene.add(floor);
-
-  const figure = createFigure();
-  figure.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; }});
-  scene.add(figure);
-
-  let bar = null;
-  let bench = null;
-  if (exerciseType === 'squat' || exerciseType === 'deadlift' || exerciseType === 'ohp' || exerciseType === 'bench') {
-    bar = createBarbell();
-    scene.add(bar);
-  }
-  if (exerciseType === 'bench') {
-    bench = createBench();
-    scene.add(bench);
-  }
-
-  return { scene, camera, renderer, figure, bar, bench, exerciseType, container };
-}
-
-// === PUBLIC API ===
-window.init3DAnimation = function(exerciseType){
-  destroy3DAnimation();
-  const host = document.getElementById('threedHost');
-  if (!host) return;
-  // Wait for layout
-  if (host.clientWidth === 0) {
-    setTimeout(() => window.init3DAnimation(exerciseType), 50);
-    return;
-  }
-  currentScene = makeScene(host, exerciseType);
-  scrubT = 0;
-  isPlaying = false;
-  applyPose(currentScene, 0);
-
-  // Wire scrubber
-  const scrub = document.getElementById('phaseScrub');
-  const playBtn = document.getElementById('phasePlayBtn');
-  const label = document.getElementById('phaseLabel');
-  if (scrub) {
-    scrub.value = 0;
-    scrub.addEventListener('input', () => {
-      scrubT = parseInt(scrub.value) / 1000;
-      const pose = applyPose(currentScene, scrubT);
-      if (label && pose && pose.phase) label.textContent = pose.phase;
-    });
-  }
-  if (playBtn) {
-    playBtn.textContent = '▶';
-    playBtn.addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      playBtn.textContent = isPlaying ? '⏸' : '▶';
-    });
-  }
-
-  // Render loop
-  function tick(){
-    if (!currentScene) return;
-    if (isPlaying) {
-      scrubT += 0.0035;
-      if (scrubT > 1) scrubT = 0;
-      if (scrub) scrub.value = Math.round(scrubT * 1000);
-      const pose = applyPose(currentScene, scrubT);
-      if (label && pose && pose.phase) label.textContent = pose.phase;
-    }
-    currentScene.renderer.render(currentScene.scene, currentScene.camera);
-    animationFrame = requestAnimationFrame(tick);
-  }
-  tick();
-
-  // Handle resize
-  window._3dResizeHandler = () => {
-    if (!currentScene) return;
-    const w = currentScene.container.clientWidth;
-    const h = currentScene.container.clientHeight;
-    currentScene.camera.aspect = w / h;
-    currentScene.camera.updateProjectionMatrix();
-    currentScene.renderer.setSize(w, h);
-  };
-  window.addEventListener('resize', window._3dResizeHandler);
-};
-
-window.destroy3DAnimation = function(){
-  if (animationFrame) cancelAnimationFrame(animationFrame);
-  animationFrame = null;
-  isPlaying = false;
-  if (window._3dResizeHandler) {
-    window.removeEventListener('resize', window._3dResizeHandler);
-    window._3dResizeHandler = null;
-  }
-  if (currentScene) {
-    if (currentScene.renderer) {
-      currentScene.renderer.dispose();
-      if (currentScene.renderer.domElement && currentScene.renderer.domElement.parentNode) {
-        currentScene.renderer.domElement.parentNode.removeChild(currentScene.renderer.domElement);
-      }
-    }
-    currentScene.scene.traverse(o => {
-      if (o.geometry) o.geometry.dispose();
-      if (o.material) {
-        if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
-        else o.material.dispose();
-      }
-    });
-    currentScene = null;
-  }
-};
-</script>
 </body>
 </html>
